@@ -33,6 +33,7 @@ import nav from "./assets/NAV.png";
 import Receive from "./components/Receive";
 import Send from "./components/Send";
 import ConfirmTx from "./components/ConfirmTx";
+import Gift from "./components/Gift";
 
 themeOptions.spacing(10);
 
@@ -575,6 +576,12 @@ class App extends React.Component<any, any> {
                   walletName={walletName}
                   network={this.wallet.network}
                 ></Settings>
+              ) : bottomNavigation == 4 ? (
+                <Gift
+                  wallet={this.njs.wallet}
+                  network={this.wallet.network}
+                  balance={balances}
+                />
               ) : (
                 <>Unknown</>
               )}
@@ -606,8 +613,8 @@ class App extends React.Component<any, any> {
                       icon={<SettingsOutlined />}
                   />
                   <BottomNavigationAction
-                      label="Chat"
-                      icon={<SettingsOutlined />}
+                      label="Gifts"
+                      icon={<PaymentOutlined />}
                   />
                 </BottomNavigation>
               </Paper>
