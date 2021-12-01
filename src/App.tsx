@@ -109,6 +109,8 @@ class App extends React.Component<any, any> {
   public njs: any;
   public wallet: any;
 
+  public mn = require('electrum-mnemonic');
+
   constructor(props: any) {
     super(props);
     this.state = {
@@ -448,13 +450,36 @@ class App extends React.Component<any, any> {
     amount: number,
     type = 0x1,
   ) => {
-
+    const encodedWallet = this.generateTempWallet(amount);
+    console.log(new Buffer(encodedWallet, 'base64').toString('ascii'));
     if (from == "nav") {
       console.log("nav");
     } else if (from == "xnav") {
       console.log("xnav");
     }
   };
+
+  private generateTempWallet(amount: number): string {
+    const network = this.wallet.network;
+    const name = 'wallet-dump';
+    // const type = 'navcoin-js-v1';
+    const password = 'test';
+    const spendingPassword = 'test';
+    const mnemonic = this.mn.generateMnemonic();
+    console.log(`generating new wallet: `);
+    const wallet = new this.njs.wallet.WalletFile({ network, password, spendingPassword, mnemonic });
+    const walletToEncode = {
+      name,
+      mnemonic,
+      password,
+      spendingPassword,
+      network,
+      amount,
+    };
+    const buff = new Buffer(JSON.stringify(walletToEncode));
+    console.log(buff.toString("base64"))
+    return buff.toString("base64");
+  }
 
   public render = () => {
     const {
