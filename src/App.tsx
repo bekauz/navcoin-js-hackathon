@@ -409,10 +409,52 @@ class App extends React.Component<any, any> {
     }
   };
 
-  public onGift = async ( ) => {
-    await null;
+  public onGift = async (
+    from: string,
+    to: string,
+    amount: number,
+    type = 0x1,
+  ) => {
+    const afterFunc = async (password: string) => {
+      const mnemonic: string = await this.wallet.db.GetMasterKey(
+        "mnemonic",
+        password
+      );
+      if (mnemonic) {
+        this.setState({
+          askPassword: false,
+          afterPassword: undefined,
+          errorPassword: "",
+        });
+        await this.onGiftPassword(from, to, amount, type);
+      } else {
+        this.setState({ errorPassword: "Wrong password!" });
+      }
+    };
+    if (await this.wallet.GetMasterKey("mnemonic", undefined)) {
+      await afterFunc("");
+    } else {
+      this.setState({
+        askPassword: true,
+        afterPassword: afterFunc,
+        errorPassword: "",
+      });
+    }
   };
 
+  public onGiftPassword = async (
+    from: string,
+    to: string,
+    amount: number,
+    type = 0x1,
+  ) => {
+
+    if (from == "nav") {
+      console.log("nav");
+    } else if (from == "xnav") {
+      console.log("xnav");
+    }
+  };
 
   public render = () => {
     const {
@@ -586,6 +628,7 @@ class App extends React.Component<any, any> {
                   wallet={this.njs.wallet}
                   network={this.wallet.network}
                   balance={balances}
+                  onGift={this.onGift}
                 />
               ) : (
                 <>Unknown</>

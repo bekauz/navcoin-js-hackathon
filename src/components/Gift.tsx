@@ -167,7 +167,12 @@ export default function Gift(props: any): React.ReactElement {
             sx={{ width: "auto", float: "right" }}
             onClick={async () => {
               if (amount && amount > 0) {
-                await onGift();
+                await onGift(
+                  from || "nav",
+                  `gift`,
+                  amount * 1e8,
+                  utxoType,
+                );
               }
             }}
           >
