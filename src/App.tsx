@@ -409,6 +409,11 @@ class App extends React.Component<any, any> {
     }
   };
 
+  public onGift = async ( ) => {
+    await null;
+  };
+
+
   public render = () => {
     const {
       walletName,
