@@ -481,6 +481,25 @@ class App extends React.Component<any, any> {
     return buff.toString("base64");
   }
 
+  public onRedeemGiftCode = async (
+    giftCode: string,
+    privateAddress: string,
+    publicAddress: string,
+  ) => {
+    try {
+      const decodedGiftCode = Buffer.from(giftCode, 'base64');
+      const wallet = JSON.parse(decodedGiftCode.toString('ascii'));
+      // const txs = await this.wallet.xNavCreateTransaction(
+      //   privateAddress,
+      //   wallet.amount,
+      //   "test",
+      //   wallet.spendingPassword,
+      // );
+    } catch (error) {
+      console.log(`error redeeming gift card: ${error}`);
+    }
+  };
+
   public render = () => {
     const {
       walletName,
@@ -654,6 +673,8 @@ class App extends React.Component<any, any> {
                   network={this.wallet.network}
                   balance={balances}
                   onGift={this.onGift}
+                  onRedeemGiftCode={this.onRedeemGiftCode}
+                  addresses={addresses}
                 />
               ) : (
                 <>Unknown</>

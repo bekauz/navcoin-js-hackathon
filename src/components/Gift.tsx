@@ -23,6 +23,8 @@ export default function Gift(props: any): React.ReactElement {
     hideFrom,
     utxoType,
     onGift,
+    onRedeemGiftCode,
+    addresses,
   } = props;
 
   const [from, setFrom] = React.useState(utxoType == 0x2 ? "staked" : "nav");
@@ -33,6 +35,14 @@ export default function Gift(props: any): React.ReactElement {
 
   const [amount, setAmount] = React.useState<number | undefined>(undefined);
   const [errorAmount, setErrorAmount] = React.useState(false);
+
+  const [giftCode, setGiftCode] = React.useState<string | undefined>(undefined);
+  const [errorGiftCode, setErrorGiftCode] = React.useState(false);
+
+  function validateGiftCode(type: string): boolean {
+    // TODO
+    return true;
+  }
 
   return (
     <Box
@@ -179,6 +189,104 @@ export default function Gift(props: any): React.ReactElement {
             Generate voucher
           </Button>
         </Box>
+      </Box>
+    </Box>
+
+    <Typography
+        sx={{
+          m: 4,
+          mb: 2,
+          maxWidth: "100%",
+          wordWrap: "break-word",
+          textAlign: "center",
+        }}
+        variant={"h4"}
+      >
+        Redeem a gift code
+      </Typography>
+
+      <Box
+       sx={{
+        display: "flex",
+        width: "100%",
+        flexDirection: "column",
+      }}>
+
+        <Box
+          sx={{
+            maxWidth: 800,
+            width: "90%",
+            borderRadius: 1,
+            mt: 2,
+
+            p: 2,
+            pt: 4,
+            alignSelf: "center",
+            alignItems: "center",
+            justifyContent: "center",
+            bgcolor: "background.paper",
+          }}
+        >
+          <Box
+            sx={{
+              m: (theme) => theme.spacing(0, 1, 1, 1),
+            }}
+          >
+            <Stack spacing={2}>
+
+              <TextField
+                autoComplete="off"
+                id="giftCode"
+                label="Gift code"
+                placeholder="Enter the gift code"
+                fullWidth
+                error={errorGiftCode}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                value={giftCode}
+                onChange={(e) => {
+                  console.log
+                  const giftCodeVal = e.target.value;
+                  const legit = validateGiftCode(giftCodeVal);
+                  if (legit) {
+                    setGiftCode(giftCodeVal);
+                    setErrorGiftCode(false);
+                  } else {
+                    setErrorGiftCode(true);
+                  }
+                }}
+                InputProps={{
+
+                }}
+              />
+            </Stack>
+          </Box>
+          <Box
+            sx={{
+              m: (theme) => theme.spacing(2, 1, 1, 1),
+            }}
+          >
+          <Button
+            sx={{ width: "auto", float: "right" }}
+            onClick={async () => {
+              if (!errorGiftCode && giftCode) {
+                console.log(`gift code redeeming: ${giftCode}`);
+                console.log(addresses);
+                const privateAddress = Object.keys(addresses["spending"]['private'])[0];
+                const publicAddress = Object.keys(addresses["spending"]['public'])[0];
+                await onRedeemGiftCode(
+                  giftCode,
+                  privateAddress,
+                  publicAddress,
+                );
+              }
+            }}
+          >
+            Redeem!
+          </Button>
+        </Box>
+
       </Box>
     </Box>
   </Box>
