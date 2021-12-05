@@ -449,36 +449,118 @@ class App extends React.Component<any, any> {
     to: string,
     amount: number,
     type = 0x1,
+    password = "",
+    address = undefined
   ) => {
-    const encodedWallet = this.generateTempWallet(amount);
-    console.log(new Buffer(encodedWallet, 'base64').toString('ascii'));
+    const encodedWallet = await this.generateTempWallet();
+
+    const walletToEncode = {
+      mnemonic: encodedWallet.mnemonic,
+      password,
+      spendingPassword: encodedWallet.spendingPassword,
+      network: encodedWallet.network,
+    }
+
+    console.log(encodedWallet);
+    const buff = Buffer.from(JSON.stringify(walletToEncode));
+    console.log(buff.toString("base64"));
+
+    const xNavAddress = (await encodedWallet.xNavReceivingAddresses(false))[0].address;
+    const navAddress = (await encodedWallet.NavReceivingAddresses(false))[0].address;
+
+
     if (from == "nav") {
-      console.log("nav");
+      try {
+        const txs = await this.wallet.NavCreateTransaction(
+          navAddress,
+          amount,
+          "",
+          password,
+          true,
+          100000,
+          type,
+          address,
+        );
+        if (txs) {
+          this.setState({
+            showConfirmTx: true,
+            confirmTxText: `${amount / 1e8} ${from}  for gift voucher, Fee: ${
+              txs.fee / 1e8
+            }`,
+            toSendTxs: txs.tx,
+          });
+        } else {
+          this.setState({
+            errorLoad: "Could not create transaction.",
+            showConfirmTx: false,
+            confirmTxText: "",
+            toSendTxs: [],
+          });
+        }
+      } catch (e: any) {
+        this.setState({
+          errorLoad: e.toString(),
+          showConfirmTx: false,
+          confirmTxText: "",
+          toSendTxs: [],
+        });
+      }
     } else if (from == "xnav") {
-      console.log("xnav");
+      try {
+        const txs = await this.wallet.xNavCreateTransaction(
+          xNavAddress,
+          amount,
+          "",
+          password
+        );
+        if (txs) {
+          this.setState({
+            showConfirmTx: true,
+            confirmTxText: `${amount / 1e8} ${from} for gift voucher, Fee: ${
+              txs.fee / 1e8
+            }`,
+            toSendTxs: txs.tx,
+          });
+        } else {
+          this.setState({
+            errorLoad: "Could not create transaction.",
+            showConfirmTx: false,
+            confirmTxText: "",
+            toSendTxs: [],
+          });
+        }
+      } catch (e: any) {
+        this.setState({
+          errorLoad: e.toString(),
+          showConfirmTx: false,
+          confirmTxText: "",
+          toSendTxs: [],
+        });
+      }
     }
   };
 
-  private generateTempWallet(amount: number): string {
+  private async generateTempWallet(): Promise<any> {
     const network = this.wallet.network;
     const name = 'wallet-dump';
     // const type = 'navcoin-js-v1';
     const password = 'test';
     const spendingPassword = 'test';
-    const mnemonic = this.mn.generateMnemonic();
-    console.log(`generating new wallet: `);
-    const wallet = new this.njs.wallet.WalletFile({ network, password, spendingPassword, mnemonic });
-    const walletToEncode = {
-      name,
-      mnemonic,
+
+    const wallet = new this.njs.wallet.WalletFile({
+      file: undefined,
+      network,
       password,
       spendingPassword,
-      network,
-      amount,
-    };
-    const buff = new Buffer(JSON.stringify(walletToEncode));
-    console.log(buff.toString("base64"))
-    return buff.toString("base64");
+      log: true,
+    });
+    try {
+      await wallet.Load();
+    } catch (e) {
+      console.log(e);
+    }
+
+    return wallet;
   }
 
   public onRedeemGiftCode = async (
@@ -489,6 +571,7 @@ class App extends React.Component<any, any> {
     try {
       const decodedGiftCode = Buffer.from(giftCode, 'base64');
       const wallet = JSON.parse(decodedGiftCode.toString('ascii'));
+      console.log(wallet);
       // const txs = await this.wallet.xNavCreateTransaction(
       //   privateAddress,
       //   wallet.amount,

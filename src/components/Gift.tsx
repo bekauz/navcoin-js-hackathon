@@ -256,9 +256,7 @@ export default function Gift(props: any): React.ReactElement {
                     setErrorGiftCode(true);
                   }
                 }}
-                InputProps={{
-
-                }}
+                InputProps={{ }}
               />
             </Stack>
           </Box>
