@@ -33,6 +33,7 @@ import nav from "./assets/NAV.png";
 import Receive from "./components/Receive";
 import Send from "./components/Send";
 import ConfirmTx from "./components/ConfirmTx";
+import Gift from "./components/Gift";
 
 themeOptions.spacing(10);
 
@@ -107,6 +108,8 @@ class App extends React.Component<any, any> {
   public state: IAppState;
   public njs: any;
   public wallet: any;
+
+  public mn = require('electrum-mnemonic');
 
   constructor(props: any) {
     super(props);
@@ -408,6 +411,178 @@ class App extends React.Component<any, any> {
     }
   };
 
+  public onGift = async (
+    from: string,
+    to: string,
+    amount: number,
+    type = 0x1,
+  ) => {
+    const afterFunc = async (password: string) => {
+      const mnemonic: string = await this.wallet.db.GetMasterKey(
+        "mnemonic",
+        password
+      );
+      if (mnemonic) {
+        this.setState({
+          askPassword: false,
+          afterPassword: undefined,
+          errorPassword: "",
+        });
+        await this.onGiftPassword(from, to, amount, type);
+      } else {
+        this.setState({ errorPassword: "Wrong password!" });
+      }
+    };
+    if (await this.wallet.GetMasterKey("mnemonic", undefined)) {
+      await afterFunc("");
+    } else {
+      this.setState({
+        askPassword: true,
+        afterPassword: afterFunc,
+        errorPassword: "",
+      });
+    }
+  };
+
+  public onGiftPassword = async (
+    from: string,
+    to: string,
+    amount: number,
+    type = 0x1,
+    password = "",
+    address = undefined
+  ) => {
+    const encodedWallet = await this.generateTempWallet();
+
+    const walletToEncode = {
+      mnemonic: encodedWallet.mnemonic,
+      password,
+      spendingPassword: encodedWallet.spendingPassword,
+      network: encodedWallet.network,
+    }
+
+    console.log(encodedWallet);
+    const buff = Buffer.from(JSON.stringify(walletToEncode));
+    console.log(buff.toString("base64"));
+
+    const xNavAddress = (await encodedWallet.xNavReceivingAddresses(false))[0].address;
+    const navAddress = (await encodedWallet.NavReceivingAddresses(false))[0].address;
+
+
+    if (from == "nav") {
+      try {
+        const txs = await this.wallet.NavCreateTransaction(
+          navAddress,
+          amount,
+          "",
+          password,
+          true,
+          100000,
+          type,
+          address,
+        );
+        if (txs) {
+          this.setState({
+            showConfirmTx: true,
+            confirmTxText: `${amount / 1e8} ${from}  for gift voucher, Fee: ${
+              txs.fee / 1e8
+            }`,
+            toSendTxs: txs.tx,
+          });
+        } else {
+          this.setState({
+            errorLoad: "Could not create transaction.",
+            showConfirmTx: false,
+            confirmTxText: "",
+            toSendTxs: [],
+          });
+        }
+      } catch (e: any) {
+        this.setState({
+          errorLoad: e.toString(),
+          showConfirmTx: false,
+          confirmTxText: "",
+          toSendTxs: [],
+        });
+      }
+    } else if (from == "xnav") {
+      try {
+        const txs = await this.wallet.xNavCreateTransaction(
+          xNavAddress,
+          amount,
+          "",
+          password
+        );
+        if (txs) {
+          this.setState({
+            showConfirmTx: true,
+            confirmTxText: `${amount / 1e8} ${from} for gift voucher, Fee: ${
+              txs.fee / 1e8
+            }`,
+            toSendTxs: txs.tx,
+          });
+        } else {
+          this.setState({
+            errorLoad: "Could not create transaction.",
+            showConfirmTx: false,
+            confirmTxText: "",
+            toSendTxs: [],
+          });
+        }
+      } catch (e: any) {
+        this.setState({
+          errorLoad: e.toString(),
+          showConfirmTx: false,
+          confirmTxText: "",
+          toSendTxs: [],
+        });
+      }
+    }
+  };
+
+  private async generateTempWallet(): Promise<any> {
+    const network = this.wallet.network;
+    const name = 'wallet-dump';
+    // const type = 'navcoin-js-v1';
+    const password = 'test';
+    const spendingPassword = 'test';
+
+    const wallet = new this.njs.wallet.WalletFile({
+      file: undefined,
+      network,
+      password,
+      spendingPassword,
+      log: true,
+    });
+    try {
+      await wallet.Load();
+    } catch (e) {
+      console.log(e);
+    }
+
+    return wallet;
+  }
+
+  public onRedeemGiftCode = async (
+    giftCode: string,
+    privateAddress: string,
+    publicAddress: string,
+  ) => {
+    try {
+      const decodedGiftCode = Buffer.from(giftCode, 'base64');
+      const wallet = JSON.parse(decodedGiftCode.toString('ascii'));
+      console.log(wallet);
+      // const txs = await this.wallet.xNavCreateTransaction(
+      //   privateAddress,
+      //   wallet.amount,
+      //   "test",
+      //   wallet.spendingPassword,
+      // );
+    } catch (error) {
+      console.log(`error redeeming gift card: ${error}`);
+    }
+  };
+
   public render = () => {
     const {
       walletName,
@@ -575,6 +750,15 @@ class App extends React.Component<any, any> {
                   walletName={walletName}
                   network={this.wallet.network}
                 ></Settings>
+              ) : bottomNavigation == 4 ? (
+                <Gift
+                  wallet={this.njs.wallet}
+                  network={this.wallet.network}
+                  balance={balances}
+                  onGift={this.onGift}
+                  onRedeemGiftCode={this.onRedeemGiftCode}
+                  addresses={addresses}
+                />
               ) : (
                 <>Unknown</>
               )}
@@ -606,8 +790,8 @@ class App extends React.Component<any, any> {
                       icon={<SettingsOutlined />}
                   />
                   <BottomNavigationAction
-                      label="Chat"
-                      icon={<SettingsOutlined />}
+                      label="Gifts"
+                      icon={<PaymentOutlined />}
                   />
                 </BottomNavigation>
               </Paper>
