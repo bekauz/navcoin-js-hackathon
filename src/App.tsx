@@ -449,24 +449,29 @@ class App extends React.Component<any, any> {
     to: string,
     amount: number,
     type = 0x1,
-    password = "",
     address = undefined
   ) => {
-    const encodedWallet = await this.generateTempWallet();
+    // const type: string = 'navcoin-js-v1';
+    const name = (Math.random() + 1).toString(36).substring(5);
+    const password = (Math.random() + 1).toString(36).substring(5);
+    const spendingPassword = (Math.random() + 1).toString(36).substring(5);
+    
+    const wallet = await this.generateTempWallet(name, password, spendingPassword);
 
     const walletToEncode = {
-      mnemonic: encodedWallet.mnemonic,
+      name,
+      mnemonic: wallet.newMnemonic,
       password,
-      spendingPassword: encodedWallet.spendingPassword,
-      network: encodedWallet.network,
+      spendingPassword,
+      network: 'testnet',
     }
 
-    console.log(encodedWallet);
+    console.log(walletToEncode);
     const buff = Buffer.from(JSON.stringify(walletToEncode));
     console.log(buff.toString("base64"));
 
-    const xNavAddress = (await encodedWallet.xNavReceivingAddresses(false))[0].address;
-    const navAddress = (await encodedWallet.NavReceivingAddresses(false))[0].address;
+    const xNavAddress = (await wallet.xNavReceivingAddresses(false))[0].address;
+    const navAddress = (await wallet.NavReceivingAddresses(false))[0].address;
 
 
     if (from == "nav") {
@@ -540,27 +545,30 @@ class App extends React.Component<any, any> {
     }
   };
 
-  private async generateTempWallet(): Promise<any> {
-    const network = this.wallet.network;
-    const name = 'wallet-dump';
-    // const type = 'navcoin-js-v1';
-    const password = 'test';
-    const spendingPassword = 'test';
-
+  private async generateTempWallet(name: string, password: string, spendingPassword: string): Promise<any> {
+    
     const wallet = new this.njs.wallet.WalletFile({
       file: undefined,
-      network,
+      network: this.wallet.network,
       password,
       spendingPassword,
       log: true,
     });
+
+    let newMnemonic = ``;
+    wallet.on("new_mnemonic", async (mnemonic: string) => {
+      console.log(`new wallet: ${mnemonic}`);
+      newMnemonic = mnemonic;
+    });
+
     try {
       await wallet.Load();
+      console.log(wallet);
+      return wallet;
     } catch (e) {
       console.log(e);
     }
-
-    return wallet;
+    return null;
   }
 
   public onRedeemGiftCode = async (
