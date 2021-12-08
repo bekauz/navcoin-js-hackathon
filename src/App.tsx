@@ -449,30 +449,18 @@ class App extends React.Component<any, any> {
     to: string,
     amount: number,
     type = 0x1,
+    password = "",
     address = undefined
   ) => {
     // const type: string = 'navcoin-js-v1';
     const name = (Math.random() + 1).toString(36).substring(5);
-    const password = (Math.random() + 1).toString(36).substring(5);
+    const walletPassword = (Math.random() + 1).toString(36).substring(5);
     const spendingPassword = (Math.random() + 1).toString(36).substring(5);
     
-    const wallet = await this.generateTempWallet(name, password, spendingPassword);
-
-    const walletToEncode = {
-      name,
-      mnemonic: wallet.newMnemonic,
-      password,
-      spendingPassword,
-      network: 'testnet',
-    }
-
-    console.log(walletToEncode);
-    const buff = Buffer.from(JSON.stringify(walletToEncode));
-    console.log(buff.toString("base64"));
-
+    const wallet = await this.generateTempWallet(name, walletPassword, spendingPassword);
+    
     const xNavAddress = (await wallet.xNavReceivingAddresses(false))[0].address;
     const navAddress = (await wallet.NavReceivingAddresses(false))[0].address;
-
 
     if (from == "nav") {
       try {
@@ -494,6 +482,18 @@ class App extends React.Component<any, any> {
             }`,
             toSendTxs: txs.tx,
           });
+
+          const walletToEncode = {
+            name,
+            mnemonic: wallet.tempMnemonicStore,
+            password: walletPassword,
+            spendingPassword,
+            network: this.wallet.network,
+            amt: amount - txs.fee,
+          }
+      
+          const buff = Buffer.from(JSON.stringify(walletToEncode));
+          console.log(`encoded wallet: ${buff.toString("base64")}`);
         } else {
           this.setState({
             errorLoad: "Could not create transaction.",
@@ -526,6 +526,18 @@ class App extends React.Component<any, any> {
             }`,
             toSendTxs: txs.tx,
           });
+          const walletToEncode = {
+            name,
+            mnemonic: wallet.tempMnemonicStore,
+            password: walletPassword,
+            spendingPassword,
+            network: this.wallet.network,
+            amt: amount - txs.fee,
+          }
+      
+          const buff = Buffer.from(JSON.stringify(walletToEncode));
+          console.log(`encoded wallet: ${buff.toString("base64")}`);
+      
         } else {
           this.setState({
             errorLoad: "Could not create transaction.",
@@ -547,28 +559,28 @@ class App extends React.Component<any, any> {
 
   private async generateTempWallet(name: string, password: string, spendingPassword: string): Promise<any> {
     
+    // const type = 'navcoin-js-v1';
+    const network = this.wallet.network;
+    
+    let newMnemonic = ``;
+    
     const wallet = new this.njs.wallet.WalletFile({
-      file: undefined,
-      network: this.wallet.network,
+      file: name,
+      network,
       password,
       spendingPassword,
       log: true,
     });
-
-    let newMnemonic = ``;
-    wallet.on("new_mnemonic", async (mnemonic: string) => {
-      console.log(`new wallet: ${mnemonic}`);
-      newMnemonic = mnemonic;
-    });
+    wallet.on('new_mnemonic', (mnemonic: string) => newMnemonic = mnemonic);
 
     try {
       await wallet.Load();
       console.log(wallet);
-      return wallet;
     } catch (e) {
       console.log(e);
     }
-    return null;
+    wallet.tempMnemonicStore = newMnemonic;
+    return wallet;
   }
 
   public onRedeemGiftCode = async (
