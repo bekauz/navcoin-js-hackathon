@@ -452,7 +452,7 @@ class App extends React.Component<any, any> {
     password = "",
     address = undefined
   ) => {
-    // const type: string = 'navcoin-js-v1';
+
     const name = (Math.random() + 1).toString(36).substring(5);
     const walletPassword = (Math.random() + 1).toString(36).substring(5);
     const spendingPassword = (Math.random() + 1).toString(36).substring(5);
@@ -491,9 +491,10 @@ class App extends React.Component<any, any> {
             network: this.wallet.network,
             amt: amount - txs.fee,
           }
-      
+
+          // encode wallet as gift code
           const buff = Buffer.from(JSON.stringify(walletToEncode));
-          console.log(`encoded wallet: ${buff.toString("base64")}`);
+          const encodedWallet: string = buff.toString("base64");
         } else {
           this.setState({
             errorLoad: "Could not create transaction.",
@@ -571,6 +572,7 @@ class App extends React.Component<any, any> {
       spendingPassword,
       log: true,
     });
+    // sub to mnemonic to retrieve it later on
     wallet.on('new_mnemonic', (mnemonic: string) => newMnemonic = mnemonic);
 
     try {
@@ -579,6 +581,7 @@ class App extends React.Component<any, any> {
     } catch (e) {
       console.log(e);
     }
+    // only used to carry back the mnemonic along with wallet (default "")
     wallet.tempMnemonicStore = newMnemonic;
     return wallet;
   }
