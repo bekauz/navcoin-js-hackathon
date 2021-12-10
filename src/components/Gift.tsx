@@ -270,7 +270,6 @@ export default function Gift(props: any): React.ReactElement {
             onClick={async () => {
               if (!errorGiftCode && giftCode) {
                 console.log(`gift code redeeming: ${giftCode}`);
-                console.log(addresses);
                 const privateAddress = Object.keys(addresses["spending"]['private'])[0];
                 const publicAddress = Object.keys(addresses["spending"]['public'])[0];
                 await onRedeemGiftCode(

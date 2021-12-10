@@ -458,9 +458,11 @@ class App extends React.Component<any, any> {
     const spendingPassword = (Math.random() + 1).toString(36).substring(5);
     
     const wallet = await this.generateTempWallet(name, walletPassword, spendingPassword);
-    
+
+    console.log(wallet);
     const xNavAddress = (await wallet.xNavReceivingAddresses(false))[0].address;
     const navAddress = (await wallet.NavReceivingAddresses(false))[0].address;
+    console.log(`generated wallet xNavAddress: ${xNavAddress}`);
 
     if (from == "nav") {
       try {
@@ -489,12 +491,17 @@ class App extends React.Component<any, any> {
             password: walletPassword,
             spendingPassword,
             network: this.wallet.network,
+            transactionType: `nav`,
             amt: amount - txs.fee,
           }
 
           // encode wallet as gift code
           const buff = Buffer.from(JSON.stringify(walletToEncode));
           const encodedWallet: string = buff.toString("base64");
+          console.log(`encoded wallet: ${encodedWallet}`);
+          console.log(`transferring funds to gift wallet: `);
+          const tx = await this.wallet.SendTransaction(txs.tx);
+          console.log(tx);
         } else {
           this.setState({
             errorLoad: "Could not create transaction.",
@@ -533,12 +540,15 @@ class App extends React.Component<any, any> {
             password: walletPassword,
             spendingPassword,
             network: this.wallet.network,
+            transactionType: `xnav`,
             amt: amount - txs.fee,
           }
       
           const buff = Buffer.from(JSON.stringify(walletToEncode));
           console.log(`encoded wallet: ${buff.toString("base64")}`);
-      
+          console.log(`transferring funds to gift wallet: `);
+          const tx = await this.wallet.SendTransaction(txs.tx);
+          console.log(tx);
         } else {
           this.setState({
             errorLoad: "Could not create transaction.",
@@ -593,18 +603,65 @@ class App extends React.Component<any, any> {
   ) => {
     try {
       const decodedGiftCode = Buffer.from(giftCode, 'base64');
-      const wallet = JSON.parse(decodedGiftCode.toString('ascii'));
-      console.log(wallet);
-      // const txs = await this.wallet.xNavCreateTransaction(
-      //   privateAddress,
-      //   wallet.amount,
-      //   "test",
-      //   wallet.spendingPassword,
-      // );
+      const giftWalletSrc = JSON.parse(decodedGiftCode.toString('ascii'));
+      console.log(giftWalletSrc);
+      
+      const giftWallet = new this.njs.wallet.WalletFile({
+        file: giftWalletSrc.name,
+        mnemonic: giftWalletSrc.mnemonic,
+        type: `navcoin-js-v1`,
+        password: giftWalletSrc.password,
+        spendingPassword: giftWalletSrc.spendingPassword,
+        network: giftWalletSrc.network,
+        log: true,
+        adapter: "websql",
+      });
+
+      giftWallet.on('sync_finished', (r: any) => {
+        console.log('sync complete')
+        console.log((giftWallet.GetBalance())); 
+        this.transferGiftFunds(giftWallet, publicAddress, privateAddress);
+      });
+      giftWallet.on('sync_status', (progress: any, pending: any , total: any) => {
+        console.log(`sync status: ${progress}%`);
+        console.log(`pending: ${pending}`);
+        console.log(`total: ${total}`);
+      });
+      
+      await giftWallet.Load();
+
+      console.log(giftWallet);
+      const xNavAddress = (await giftWallet.xNavReceivingAddresses(false))[0].address;
+      const navAddress = (await giftWallet.NavReceivingAddresses(false))[0].address;
+      console.log(`redeemed wallet xNavAddress: ${xNavAddress}`);     
     } catch (error) {
       console.log(`error redeeming gift card: ${error}`);
     }
+
   };
+
+  private async transferGiftFunds(giftWallet: any, publicAddress: string, privateAddress: string) {
+    let txs;
+    if (giftWallet.transactionType == `nav`) {
+      console.log(`withdrawing nav: `);
+      txs = await giftWallet.NavCreateTransaction(
+        publicAddress,
+        giftWallet.amount,
+        "",
+        giftWallet.spendingPassword,
+      );
+    } else {
+      console.log(`withdrawing xnav: `);
+      txs = await giftWallet.xNavCreateTransaction(
+        privateAddress,
+        giftWallet.amount,
+        "test",
+        giftWallet.spendingPassword,
+      );
+    }
+    const tx = await this.wallet.SendTransaction(txs.tx);
+    console.log(tx);
+  }
 
   public render = () => {
     const {
