@@ -34,6 +34,7 @@ import Receive from "./components/Receive";
 import Send from "./components/Send";
 import ConfirmTx from "./components/ConfirmTx";
 import Gift from "./components/Gift";
+import { Observable, PartialObserver } from "rxjs";
 
 themeOptions.spacing(10);
 
@@ -74,6 +75,11 @@ interface IWalletHistory {
   pos: number;
   timestamp: number;
   memos: string[];
+}
+
+interface IGiftTransferWrapper {
+  walletObj: any;
+  giftSrc: any;
 }
 
 const INITIAL_STATE: IAppState = {
@@ -604,7 +610,6 @@ class App extends React.Component<any, any> {
     try {
       const decodedGiftCode = Buffer.from(giftCode, 'base64');
       const giftWalletSrc = JSON.parse(decodedGiftCode.toString('ascii'));
-      console.log(giftWalletSrc);
       
       const giftWallet = new this.njs.wallet.WalletFile({
         file: giftWalletSrc.name,
@@ -617,23 +622,65 @@ class App extends React.Component<any, any> {
         adapter: "websql",
       });
 
-      giftWallet.on('sync_finished', (r: any) => {
-        console.log('sync complete')
-        console.log((giftWallet.GetBalance())); 
-        this.transferGiftFunds(giftWallet, publicAddress, privateAddress);
+      const giftObservable$ = new Observable<IGiftTransferWrapper>(subscriber => subscriber.next(undefined));
+      const giftObserver = {
+        next: async (giftInfo: IGiftTransferWrapper) => {
+          if (giftInfo != undefined) {
+            console.log((await giftInfo.walletObj.GetBalance()));
+
+            console.log('Observer got a next values');
+            console.log(giftInfo.walletObj);
+            console.log(giftInfo.giftSrc);
+            if (giftInfo.giftSrc.transactionType == `nav`) {
+              console.log(`attempting to transfer nav:`);
+              const txs = await giftInfo.walletObj.NavCreateTransaction(
+                publicAddress,
+                giftInfo.giftSrc.amount,
+                "",
+                giftInfo.giftSrc.spendingPassword,
+              );
+              const tx = await giftInfo.walletObj.SendTransaction(txs.tx);
+              console.log(tx);
+            } else {
+              console.log(`attempting to transfer xnav:`);
+              const tx = await giftInfo.walletObj.xNavCreateTransaction(
+                privateAddress,
+                giftInfo.giftSrc.amount,
+                "",
+                giftInfo.giftSrc.spendingPassword,
+              );
+              console.log(await giftInfo.walletObj.GetBalance());
+              const txs = await giftInfo.walletObj.SendTransaction(tx.txs);
+              console.log(tx);
+              console.log(txs);
+            }
+        
+          }
+        },
+        error: (err: any) => console.error('Observer got an error'),
+        complete: () => console.log('Observer got a complete notification'),
+      };
+
+      giftObservable$.subscribe(giftObserver);
+
+
+      giftWallet.on("loaded", async () => {
+        console.log("wallet loaded");
+        await giftWallet.Connect();
+        console.log('Wallet balance: ');
+        console.log((await giftWallet.GetBalance()));
+        giftObserver.next({
+          walletObj: giftWallet,
+          giftSrc: giftWalletSrc,
+        });
       });
-      giftWallet.on('sync_status', (progress: any, pending: any , total: any) => {
-        console.log(`sync status: ${progress}%`);
-        console.log(`pending: ${pending}`);
-        console.log(`total: ${total}`);
-      });
-      
+
       await giftWallet.Load();
+
 
       console.log(giftWallet);
       const xNavAddress = (await giftWallet.xNavReceivingAddresses(false))[0].address;
       const navAddress = (await giftWallet.NavReceivingAddresses(false))[0].address;
-      console.log(`redeemed wallet xNavAddress: ${xNavAddress}`);     
     } catch (error) {
       console.log(`error redeeming gift card: ${error}`);
     }
@@ -641,26 +688,28 @@ class App extends React.Component<any, any> {
   };
 
   private async transferGiftFunds(giftWallet: any, publicAddress: string, privateAddress: string) {
-    let txs;
+    console.log('attempting transfer gift funds');
     if (giftWallet.transactionType == `nav`) {
       console.log(`withdrawing nav: `);
-      txs = await giftWallet.NavCreateTransaction(
+      const txs = await giftWallet.NavCreateTransaction(
         publicAddress,
         giftWallet.amount,
         "",
         giftWallet.spendingPassword,
       );
+      const tx = await this.wallet.SendTransaction(txs.tx);
+      console.log(tx);
     } else {
       console.log(`withdrawing xnav: `);
-      txs = await giftWallet.xNavCreateTransaction(
+      const tx = await this.wallet.SendTransaction(await giftWallet.xNavCreateTransaction(
         privateAddress,
         giftWallet.amount,
         "test",
         giftWallet.spendingPassword,
-      );
+      ).tx);
+      console.log(tx);
     }
-    const tx = await this.wallet.SendTransaction(txs.tx);
-    console.log(tx);
+
   }
 
   public render = () => {
