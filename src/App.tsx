@@ -622,15 +622,11 @@ class App extends React.Component<any, any> {
       const giftObservable$ = new Observable<IGiftTransferWrapper>();
       const giftObserver = {
         next: async (giftInfo: IGiftTransferWrapper) => {
+          console.log(await giftInfo.walletObj.GetBalance());
           if (giftInfo != undefined) {
-            console.log((await giftInfo.walletObj.GetBalance()));
-            console.log('Observer got next values');
-            console.log(giftInfo);
-            setTimeout(async () => {
-              if (giftInfo.giftSrc.transactionType == `nav`) {
-                console.log(`attempting to transfer nav:`);
-                // console.log(await giftInfo.walletObj.GetAllAddresses())
-                console.log( );
+            if (giftInfo.giftSrc.transactionType == `nav`) {
+              console.log(`attempting to transfer nav:`);
+              try {
                 const txs = await giftInfo.walletObj.NavCreateTransaction(
                   publicAddress,
                   (await giftInfo.walletObj.GetBalance()).nav.confirmed,
@@ -639,26 +635,31 @@ class App extends React.Component<any, any> {
                   true,
                   10000,
                   0x1,
-                  (await giftInfo.walletObj.GetAllAddresses()).spending.public[0]
                 );
                 const tx = await giftInfo.walletObj.SendTransaction(txs.tx);
                 console.log(tx);
-              } else {
-                console.log(`attempting to transfer xnav:`);
-                const tx = await giftInfo.walletObj.xNavCreateTransaction(
+              } catch (e) {
+                console.log(e);
+              }
+            } else {
+              console.log(`attempting to transfer xnav:`);
+              try {
+                const amnt: number = (await giftInfo.walletObj.GetBalance()).xnav.confirmed;
+                const txs = await giftInfo.walletObj.xNavCreateTransaction(
                   privateAddress,
                   (await giftInfo.walletObj.GetBalance()).xnav.confirmed,
-                  "",
+                  undefined,
                   giftInfo.giftSrc.spendingPassword,
+                  true,
                 );
-                console.log(await giftInfo.walletObj.GetBalance());
-                const txs = await giftInfo.walletObj.SendTransaction(tx.txs);
+                const tx = await giftInfo.walletObj.SendTransaction(txs.tx);
                 console.log(tx);
-                console.log(txs);
+                console.log(txs);  
+              } catch (e) {
+                console.log(`error creating transaction:`);
+                console.log(e);
               }
-          
-            }, 2000);
-            
+            }            
           }
         },
         error: (err: any) => console.error('Observer got an error'),
@@ -680,15 +681,9 @@ class App extends React.Component<any, any> {
       });
 
       await giftWallet.Load();
-
-
-      console.log(giftWallet);
-      const xNavAddress = (await giftWallet.xNavReceivingAddresses(false))[0].address;
-      const navAddress = (await giftWallet.NavReceivingAddresses(false))[0].address;
     } catch (error) {
       console.log(`error redeeming gift card: ${error}`);
     }
-
   };
 
   private async transferGiftFunds(giftWallet: any, publicAddress: string, privateAddress: string) {
