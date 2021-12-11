@@ -465,10 +465,8 @@ class App extends React.Component<any, any> {
     
     const wallet = await this.generateTempWallet(name, walletPassword, spendingPassword);
 
-    console.log(wallet);
     const xNavAddress = (await wallet.xNavReceivingAddresses(false))[0].address;
     const navAddress = (await wallet.NavReceivingAddresses(false))[0].address;
-    console.log(`generated wallet xNavAddress: ${xNavAddress}`);
 
     if (from == "nav") {
       try {
@@ -594,11 +592,10 @@ class App extends React.Component<any, any> {
     try {
       await wallet.Load();
       console.log(wallet);
+      wallet.tempMnemonicStore = newMnemonic;
     } catch (e) {
       console.log(e);
     }
-    // only used to carry back the mnemonic along with wallet (default "")
-    wallet.tempMnemonicStore = newMnemonic;
     return wallet;
   }
 
@@ -622,39 +619,46 @@ class App extends React.Component<any, any> {
         adapter: "websql",
       });
 
-      const giftObservable$ = new Observable<IGiftTransferWrapper>(subscriber => subscriber.next(undefined));
+      const giftObservable$ = new Observable<IGiftTransferWrapper>();
       const giftObserver = {
         next: async (giftInfo: IGiftTransferWrapper) => {
           if (giftInfo != undefined) {
             console.log((await giftInfo.walletObj.GetBalance()));
-
-            console.log('Observer got a next values');
-            console.log(giftInfo.walletObj);
-            console.log(giftInfo.giftSrc);
-            if (giftInfo.giftSrc.transactionType == `nav`) {
-              console.log(`attempting to transfer nav:`);
-              const txs = await giftInfo.walletObj.NavCreateTransaction(
-                publicAddress,
-                giftInfo.giftSrc.amount,
-                "",
-                giftInfo.giftSrc.spendingPassword,
-              );
-              const tx = await giftInfo.walletObj.SendTransaction(txs.tx);
-              console.log(tx);
-            } else {
-              console.log(`attempting to transfer xnav:`);
-              const tx = await giftInfo.walletObj.xNavCreateTransaction(
-                privateAddress,
-                giftInfo.giftSrc.amount,
-                "",
-                giftInfo.giftSrc.spendingPassword,
-              );
-              console.log(await giftInfo.walletObj.GetBalance());
-              const txs = await giftInfo.walletObj.SendTransaction(tx.txs);
-              console.log(tx);
-              console.log(txs);
-            }
-        
+            console.log('Observer got next values');
+            console.log(giftInfo);
+            setTimeout(async () => {
+              if (giftInfo.giftSrc.transactionType == `nav`) {
+                console.log(`attempting to transfer nav:`);
+                // console.log(await giftInfo.walletObj.GetAllAddresses())
+                console.log( );
+                const txs = await giftInfo.walletObj.NavCreateTransaction(
+                  publicAddress,
+                  (await giftInfo.walletObj.GetBalance()).nav.confirmed,
+                  undefined,
+                  giftInfo.giftSrc.spendingPassword,
+                  true,
+                  10000,
+                  0x1,
+                  (await giftInfo.walletObj.GetAllAddresses()).spending.public[0]
+                );
+                const tx = await giftInfo.walletObj.SendTransaction(txs.tx);
+                console.log(tx);
+              } else {
+                console.log(`attempting to transfer xnav:`);
+                const tx = await giftInfo.walletObj.xNavCreateTransaction(
+                  privateAddress,
+                  (await giftInfo.walletObj.GetBalance()).xnav.confirmed,
+                  "",
+                  giftInfo.giftSrc.spendingPassword,
+                );
+                console.log(await giftInfo.walletObj.GetBalance());
+                const txs = await giftInfo.walletObj.SendTransaction(tx.txs);
+                console.log(tx);
+                console.log(txs);
+              }
+          
+            }, 2000);
+            
           }
         },
         error: (err: any) => console.error('Observer got an error'),
