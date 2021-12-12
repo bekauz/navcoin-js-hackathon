@@ -642,8 +642,6 @@ class App extends React.Component<any, any> {
                   0x1,
                 );
                 if (txs) {
-                  console.log(`You wish to redeem gift code of ${txs.amount}?`)
-                  console.log(giftInfo);
                   this.setState({
                     showConfirmTx: true,
                     showConfirmText: true,
@@ -651,15 +649,11 @@ class App extends React.Component<any, any> {
                     toSendTxs: txs.tx,
                   })
                 } else {
-                  console.log(`could not sorry`)
                   this.setState({
                     errorLoad: "Could not redeem gift code. Try again in a minute.",
                   });
                 }
-                // const tx = await giftInfo.walletObj.SendTransaction(txs.tx);
-                // console.log(tx);
               } catch (e: any) {
-                console.log(e);
                 this.setState({
                   errorLoad: "Could not redeem gift code. Try again in a minute.",
                 });
@@ -667,7 +661,6 @@ class App extends React.Component<any, any> {
             } else {
               console.log(`attempting to transfer xnav:`);
               try {
-                const amnt: number = (await giftInfo.walletObj.GetBalance()).xnav.confirmed;
                 const txs = await giftInfo.walletObj.xNavCreateTransaction(
                   privateAddress,
                   (await giftInfo.walletObj.GetBalance()).xnav.confirmed,
@@ -675,12 +668,22 @@ class App extends React.Component<any, any> {
                   giftInfo.giftSrc.spendingPassword,
                   true,
                 );
-                const tx = await giftInfo.walletObj.SendTransaction(txs.tx);
-                console.log(tx);
-                console.log(txs);  
+                if (txs) {
+                  this.setState({
+                    showConfirmTx: true,
+                    showConfirmText: true,
+                    confirmTxText: `You wish to redeem gift code of ${giftInfo.giftSrc.amt} ${giftInfo.giftSrc.transactionType}?`,
+                    toSendTxs: txs.tx,
+                  })
+                } else {
+                  this.setState({
+                    errorLoad: "Could not redeem gift code. Try again in a minute.",
+                  });
+                }
               } catch (e) {
-                console.log(`error creating transaction:`);
-                console.log(e);
+                this.setState({
+                  errorLoad: "Could not redeem gift code. Try again in a minute.",
+                });
               }
             }            
           }
@@ -693,9 +696,7 @@ class App extends React.Component<any, any> {
 
 
       giftWallet.on("loaded", async () => {
-        console.log("wallet loaded");
         await giftWallet.Connect();
-        console.log('Wallet balance: ');
         console.log((await giftWallet.GetBalance()));
         giftObserver.next({
           walletObj: giftWallet,
