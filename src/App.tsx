@@ -599,6 +599,21 @@ class App extends React.Component<any, any> {
     return wallet;
   }
 
+  public giftCodeToWalletObj(giftWalletSrc: any): any {
+
+    const giftWallet = new this.njs.wallet.WalletFile({
+      file: giftWalletSrc.name,
+      mnemonic: giftWalletSrc.mnemonic,
+      type: `navcoin-js-v1`,
+      password: giftWalletSrc.password,
+      spendingPassword: giftWalletSrc.spendingPassword,
+      network: giftWalletSrc.network,
+      log: true,
+      adapter: "websql",
+    });
+    return giftWallet;
+  }
+
   public onRedeemGiftCode = async (
     giftCode: string,
     privateAddress: string,
@@ -607,17 +622,7 @@ class App extends React.Component<any, any> {
     try {
       const decodedGiftCode = Buffer.from(giftCode, 'base64');
       const giftWalletSrc = JSON.parse(decodedGiftCode.toString('ascii'));
-      
-      const giftWallet = new this.njs.wallet.WalletFile({
-        file: giftWalletSrc.name,
-        mnemonic: giftWalletSrc.mnemonic,
-        type: `navcoin-js-v1`,
-        password: giftWalletSrc.password,
-        spendingPassword: giftWalletSrc.spendingPassword,
-        network: giftWalletSrc.network,
-        log: true,
-        adapter: "websql",
-      });
+      const giftWallet = this.giftCodeToWalletObj(giftWalletSrc);
 
       const giftObservable$ = new Observable<IGiftTransferWrapper>();
       const giftObserver = {
@@ -636,10 +641,28 @@ class App extends React.Component<any, any> {
                   10000,
                   0x1,
                 );
-                const tx = await giftInfo.walletObj.SendTransaction(txs.tx);
-                console.log(tx);
-              } catch (e) {
+                if (txs) {
+                  console.log(`You wish to redeem gift code of ${txs.amount}?`)
+                  console.log(giftInfo);
+                  this.setState({
+                    showConfirmTx: true,
+                    showConfirmText: true,
+                    confirmTxText: `You wish to redeem gift code of ${giftInfo.giftSrc.amt} ${giftInfo.giftSrc.transactionType}?`,
+                    toSendTxs: txs.tx,
+                  })
+                } else {
+                  console.log(`could not sorry`)
+                  this.setState({
+                    errorLoad: "Could not redeem gift code. Try again in a minute.",
+                  });
+                }
+                // const tx = await giftInfo.walletObj.SendTransaction(txs.tx);
+                // console.log(tx);
+              } catch (e: any) {
                 console.log(e);
+                this.setState({
+                  errorLoad: "Could not redeem gift code. Try again in a minute.",
+                });
               }
             } else {
               console.log(`attempting to transfer xnav:`);
@@ -685,31 +708,6 @@ class App extends React.Component<any, any> {
       console.log(`error redeeming gift card: ${error}`);
     }
   };
-
-  private async transferGiftFunds(giftWallet: any, publicAddress: string, privateAddress: string) {
-    console.log('attempting transfer gift funds');
-    if (giftWallet.transactionType == `nav`) {
-      console.log(`withdrawing nav: `);
-      const txs = await giftWallet.NavCreateTransaction(
-        publicAddress,
-        giftWallet.amount,
-        "",
-        giftWallet.spendingPassword,
-      );
-      const tx = await this.wallet.SendTransaction(txs.tx);
-      console.log(tx);
-    } else {
-      console.log(`withdrawing xnav: `);
-      const tx = await this.wallet.SendTransaction(await giftWallet.xNavCreateTransaction(
-        privateAddress,
-        giftWallet.amount,
-        "test",
-        giftWallet.spendingPassword,
-      ).tx);
-      console.log(tx);
-    }
-
-  }
 
   public render = () => {
     const {
