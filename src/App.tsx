@@ -132,7 +132,7 @@ class App extends React.Component<any, any> {
       (await localforage.getItem("walletName")) || "";
 
     if (alreadyLoaded != "") {
-      await this.loadWallet(alreadyLoaded, "", "", "", "", false, undefined);
+      await this.loadWallet(alreadyLoaded, "", "", "", "", false, undefined, undefined);
     }
   }
 
@@ -148,7 +148,8 @@ class App extends React.Component<any, any> {
     password: string,
     spendingPassword: string,
     zap: boolean,
-    network: string | undefined
+    network: string | undefined,
+    giftCode: string | undefined,
   ) {
     try {
       this.wallet = new this.njs.wallet.WalletFile({
@@ -203,6 +204,8 @@ class App extends React.Component<any, any> {
         });
 
         await this.wallet.Connect();
+
+        console.log(`connected with gift code: ${giftCode}`)
       });
 
       this.wallet.on("new_staking_address", async (a: any, b: any) => {
@@ -820,7 +823,8 @@ class App extends React.Component<any, any> {
                 password: string,
                 spendingPassword: string,
                 zap: boolean,
-                network: string
+                network: string,
+                giftCode: string,
               ) => {
                 await this.loadWallet(
                   name,
@@ -829,7 +833,8 @@ class App extends React.Component<any, any> {
                   password,
                   spendingPassword,
                   zap,
-                  network
+                  network,
+                  giftCode,
                 );
               }}
             />

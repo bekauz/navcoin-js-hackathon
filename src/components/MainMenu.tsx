@@ -18,6 +18,7 @@ import ImportWallet from "./MainMenu/ImportWallet";
 import CreateWallet from "./MainMenu/CreateWallet";
 import OpenWallet from "./MainMenu/OpenWallet";
 import Wrapper from "./Wrapper";
+import CreateWalletWithCode from "./MainMenu/CreateWalletWithCode";
 
 function MainMenu(props: any) {
   const { wallets, children, onLoad } = props;
@@ -140,6 +141,8 @@ function MainMenu(props: any) {
             <CreateWallet onClick={onLoad} wallets={wallets} />
           ) : option == 3 ? (
             <ImportWallet onClick={onLoad} wallets={wallets} />
+          ) : option == 4 ? (
+            <CreateWalletWithCode onClick={onLoad} wallets={wallets} />
           ) : (
             <>{children}</>
           )}
