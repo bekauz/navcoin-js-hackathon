@@ -205,7 +205,17 @@ class App extends React.Component<any, any> {
 
         await this.wallet.Connect();
 
-        console.log(`connected with gift code: ${giftCode}`)
+        // console.log(`connected with gift code: ${giftCode}`)
+        
+        // const privateAddress = Object.keys((await this.wallet.GetAllAddresses())["spending"]['private'])[0];
+        // const publicAddress = Object.keys((await this.wallet.GetAllAddresses())["spending"]['public'])[0];
+        // if (giftCode != undefined) {
+        //   await this.onRedeemGiftCode(
+        //     giftCode,
+        //     Object.keys((await this.wallet.GetAllAddresses())["spending"]['private'])[0],
+        //     Object.keys((await this.wallet.GetAllAddresses())["spending"]['public'])[0],
+        //   );
+        // }
       });
 
       this.wallet.on("new_staking_address", async (a: any, b: any) => {
@@ -243,6 +253,21 @@ class App extends React.Component<any, any> {
         });
         this.setState({ syncProgress: 100, pendingQueue: 0 });
         console.log(await this.wallet.GetHistory());
+
+        if (giftCode != undefined) {
+          console.log(`connected with gift code: ${giftCode}`)
+        
+          const privateAddress = Object.keys((await this.wallet.GetAllAddresses())["spending"]['private'])[0];
+          const publicAddress = Object.keys((await this.wallet.GetAllAddresses())["spending"]['public'])[0];
+          if (giftCode != undefined) {
+            await this.onRedeemGiftCode(
+              giftCode,
+              Object.keys((await this.wallet.GetAllAddresses())["spending"]['private'])[0],
+              Object.keys((await this.wallet.GetAllAddresses())["spending"]['public'])[0],
+            );
+          }
+          giftCode = undefined;
+        }
       });
 
       this.wallet.on("connected", (server: string) =>
@@ -697,7 +722,7 @@ class App extends React.Component<any, any> {
           const { walletName } = giftWalletSrc.name;
           giftWallet.Disconnect();
           this.njs.wallet.WalletFile.RemoveWallet(walletName);
-          await localforage.removeItem(giftWalletSrc.name);
+          // await localforage.removeItem(giftWalletSrc.name);
           await this.updateWalletList();
         },
       };
