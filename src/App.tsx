@@ -239,6 +239,7 @@ class App extends React.Component<any, any> {
           addresses: await this.wallet.GetAllAddresses(),
         });
         this.setState({ syncProgress: 100, pendingQueue: 0 });
+        console.log(await this.wallet.GetHistory());
       });
 
       this.wallet.on("connected", (server: string) =>
@@ -473,7 +474,7 @@ class App extends React.Component<any, any> {
         const txs = await this.wallet.NavCreateTransaction(
           navAddress,
           amount,
-          "",
+          "gift",
           password,
           true,
           100000,
@@ -527,7 +528,7 @@ class App extends React.Component<any, any> {
         const txs = await this.wallet.xNavCreateTransaction(
           xNavAddress,
           amount,
-          "",
+          "gift",
           password
         );
         if (txs) {
