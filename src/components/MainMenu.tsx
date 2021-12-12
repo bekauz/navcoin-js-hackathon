@@ -123,6 +123,15 @@ function MainMenu(props: any) {
                 >
                   Import wallet
                 </Button>
+
+                <Button
+                  onClick={() => {
+                    setOption(4);
+                    setTitle("Redeem a gift code");
+                  }}
+                >
+                  Redeeem a Gift Code
+                </Button>
               </Stack>
             </React.Fragment>
           ) : option == 1 ? (
