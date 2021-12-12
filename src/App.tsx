@@ -886,6 +886,7 @@ class App extends React.Component<any, any> {
                   onGift={this.onGift}
                   onRedeemGiftCode={this.onRedeemGiftCode}
                   addresses={addresses}
+                  njs={this.njs}
                 />
               ) : (
                 <>Unknown</>

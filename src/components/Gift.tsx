@@ -25,6 +25,7 @@ export default function Gift(props: any): React.ReactElement {
     onGift,
     onRedeemGiftCode,
     addresses,
+    njs,
   } = props;
 
   const [from, setFrom] = React.useState(utxoType == 0x2 ? "staked" : "nav");
@@ -39,8 +40,23 @@ export default function Gift(props: any): React.ReactElement {
   const [giftCode, setGiftCode] = React.useState<string | undefined>(undefined);
   const [errorGiftCode, setErrorGiftCode] = React.useState(false);
 
-  function validateGiftCode(type: string): boolean {
-    // TODO
+  function validateGiftCode(code: string): boolean {
+    try {
+      const decodedGiftCode = Buffer.from(code, 'base64');
+      const giftWalletSrc = JSON.parse(decodedGiftCode.toString('ascii'));
+      const giftWallet = new njs.wallet.WalletFile({
+        file: giftWalletSrc.name,
+        mnemonic: giftWalletSrc.mnemonic,
+        type: `navcoin-js-v1`,
+        password: giftWalletSrc.password,
+        spendingPassword: giftWalletSrc.spendingPassword,
+        network: giftWalletSrc.network,
+        log: true,
+        adapter: "websql",
+      });
+    } catch (e) {
+      return false;
+    }
     return true;
   }
 
@@ -246,15 +262,13 @@ export default function Gift(props: any): React.ReactElement {
                 }}
                 value={giftCode}
                 onChange={(e) => {
-                  console.log
                   const giftCodeVal = e.target.value;
-                  const legit = validateGiftCode(giftCodeVal);
-                  if (legit) {
-                    setGiftCode(giftCodeVal);
+                  if (validateGiftCode(giftCodeVal)) {
                     setErrorGiftCode(false);
                   } else {
                     setErrorGiftCode(true);
                   }
+                  setGiftCode(giftCodeVal);
                 }}
                 InputProps={{ }}
               />
