@@ -688,8 +688,14 @@ class App extends React.Component<any, any> {
             }            
           }
         },
-        error: (err: any) => console.error('Observer got an error'),
-        complete: () => console.log('Observer got a complete notification'),
+        error: (e: any) => console.error(e),
+        complete: async () => {
+          const { walletName } = giftWalletSrc.name;
+          giftWallet.Disconnect();
+          this.njs.wallet.WalletFile.RemoveWallet(walletName);
+          await localforage.removeItem(giftWalletSrc.name);
+          await this.updateWalletList();
+        },
       };
 
       giftObservable$.subscribe(giftObserver);
@@ -698,10 +704,13 @@ class App extends React.Component<any, any> {
       giftWallet.on("loaded", async () => {
         await giftWallet.Connect();
         console.log((await giftWallet.GetBalance()));
-        giftObserver.next({
+        const giftWrapper: IGiftTransferWrapper = {
           walletObj: giftWallet,
           giftSrc: giftWalletSrc,
-        });
+        };
+
+        await giftObserver.next(giftWrapper);
+        giftObserver.complete();
       });
 
       await giftWallet.Load();
