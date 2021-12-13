@@ -510,14 +510,6 @@ class App extends React.Component<any, any> {
           address,
         );
         if (txs) {
-          this.setState({
-            showConfirmTx: true,
-            confirmTxText: `${amount / 1e8} ${from}  for gift voucher, Fee: ${
-              txs.fee / 1e8
-            }`,
-            toSendTxs: txs.tx,
-          });
-
           const walletToEncode = {
             name,
             mnemonic: wallet.tempMnemonicStore,
@@ -532,9 +524,20 @@ class App extends React.Component<any, any> {
           const buff = Buffer.from(JSON.stringify(walletToEncode));
           const encodedWallet: string = buff.toString("base64");
           console.log(`encoded wallet: ${encodedWallet}`);
-          console.log(`transferring funds to gift wallet: `);
-          const tx = await this.wallet.SendTransaction(txs.tx);
-          console.log(tx);
+
+          this.wallet.on("new_tx", async (entry: IWalletHistory) => {
+            if (entry.amount === -amount) {
+              // TODO: display generated gift code to user
+            }
+          });
+
+          this.setState({
+            showConfirmTx: true,
+            confirmTxText: `${amount / 1e8} ${from}  for gift voucher, Fee: ${
+              txs.fee / 1e8
+            }`,
+            toSendTxs: txs.tx,
+          });
         } else {
           this.setState({
             errorLoad: "Could not create transaction.",
@@ -560,13 +563,6 @@ class App extends React.Component<any, any> {
           password
         );
         if (txs) {
-          this.setState({
-            showConfirmTx: true,
-            confirmTxText: `${amount / 1e8} ${from} for gift voucher, Fee: ${
-              txs.fee / 1e8
-            }`,
-            toSendTxs: txs.tx,
-          });
           const walletToEncode = {
             name,
             mnemonic: wallet.tempMnemonicStore,
@@ -579,9 +575,20 @@ class App extends React.Component<any, any> {
       
           const buff = Buffer.from(JSON.stringify(walletToEncode));
           console.log(`encoded wallet: ${buff.toString("base64")}`);
-          console.log(`transferring funds to gift wallet: `);
-          const tx = await this.wallet.SendTransaction(txs.tx);
-          console.log(tx);
+
+          this.wallet.on("new_tx", async (entry: IWalletHistory) => {
+            if (entry.amount === -amount) {
+              // TODO: display generated gift code to user
+            }
+          });
+
+          this.setState({
+            showConfirmTx: true,
+            confirmTxText: `${amount / 1e8} ${from} for gift voucher, Fee: ${
+              txs.fee / 1e8
+            }`,
+            toSendTxs: txs.tx,
+          });
         } else {
           this.setState({
             errorLoad: "Could not create transaction.",
@@ -809,7 +816,8 @@ class App extends React.Component<any, any> {
                 confirmTxText: "",
                 showConfirmTx: false,
                 toSendTxs: [],
-                bottomNavigation: 0,
+                // TODO: maybe re-enable if workaround for new_tx event event in onGiftPassward is found
+                // bottomNavigation: 0,
               });
             }}
           />
