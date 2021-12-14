@@ -213,7 +213,7 @@ class App extends React.Component<any, any> {
         await this.wallet.Connect();
 
         // console.log(`connected with gift code: ${giftCode}`)
-        
+
         // const privateAddress = Object.keys((await this.wallet.GetAllAddresses())["spending"]['private'])[0];
         // const publicAddress = Object.keys((await this.wallet.GetAllAddresses())["spending"]['public'])[0];
         // if (giftCode != undefined) {
@@ -263,7 +263,7 @@ class App extends React.Component<any, any> {
 
         if (giftCode != undefined) {
           console.log(`connected with gift code: ${giftCode}`)
-        
+
           const privateAddress = Object.keys((await this.wallet.GetAllAddresses())["spending"]['private'])[0];
           const publicAddress = Object.keys((await this.wallet.GetAllAddresses())["spending"]['public'])[0];
           if (giftCode != undefined) {
@@ -397,9 +397,8 @@ class App extends React.Component<any, any> {
         if (txs) {
           this.setState({
             showConfirmTx: true,
-            confirmTxText: `${amount / 1e8} ${from} to ${to} Fee: ${
-              txs.fee / 1e8
-            }`,
+            confirmTxText: `${amount / 1e8} ${from} to ${to} Fee: ${txs.fee / 1e8
+              }`,
             toSendTxs: txs.tx,
           });
         } else {
@@ -429,9 +428,8 @@ class App extends React.Component<any, any> {
         if (txs) {
           this.setState({
             showConfirmTx: true,
-            confirmTxText: `${amount / 1e8} ${from} to ${to} Fee: ${
-              txs.fee / 1e8
-            }`,
+            confirmTxText: `${amount / 1e8} ${from} to ${to} Fee: ${txs.fee / 1e8
+              }`,
             toSendTxs: txs.tx,
           });
         } else {
@@ -498,7 +496,7 @@ class App extends React.Component<any, any> {
     const name = (Math.random() + 1).toString(36).substring(5);
     const walletPassword = (Math.random() + 1).toString(36).substring(5);
     const spendingPassword = (Math.random() + 1).toString(36).substring(5);
-    
+
     const wallet = await this.generateTempWallet(name, walletPassword, spendingPassword);
 
     const xNavAddress = (await wallet.xNavReceivingAddresses(false))[0].address;
@@ -530,11 +528,9 @@ class App extends React.Component<any, any> {
           // encode wallet as gift code
           const buff = Buffer.from(JSON.stringify(walletToEncode));
           const encodedWallet: string = buff.toString("base64");
-          console.log(`encoded wallet: ${encodedWallet}`);
 
           this.wallet.on("new_tx", async (entry: IWalletHistory) => {
             if (entry.amount === -amount) {
-              // TODO: display generated gift code to user
               this.setState({
                 showGiftCardDialog: true,
                 giftCardText: encodedWallet,
@@ -544,9 +540,8 @@ class App extends React.Component<any, any> {
 
           this.setState({
             showConfirmTx: true,
-            confirmTxText: `${amount / 1e8} ${from}  for gift voucher, Fee: ${
-              txs.fee / 1e8
-            }`,
+            confirmTxText: `${amount / 1e8} ${from}  for gift voucher, Fee: ${txs.fee / 1e8
+              }`,
             toSendTxs: txs.tx,
           });
         } else {
@@ -583,14 +578,13 @@ class App extends React.Component<any, any> {
             transactionType: `xnav`,
             amt: amount - txs.fee,
           }
-      
+
           const buff = Buffer.from(JSON.stringify(walletToEncode));
           console.log(`encoded wallet: ${buff.toString("base64")}`);
           const encodedWallet: string = buff.toString("base64");
 
           this.wallet.on("new_tx", async (entry: IWalletHistory) => {
             if (entry.amount === -amount) {
-              // TODO: display generated gift code to user
               this.setState({
                 showGiftCardDialog: true,
                 giftCardText: encodedWallet,
@@ -600,9 +594,8 @@ class App extends React.Component<any, any> {
 
           this.setState({
             showConfirmTx: true,
-            confirmTxText: `${amount / 1e8} ${from} for gift voucher, Fee: ${
-              txs.fee / 1e8
-            }`,
+            confirmTxText: `${amount / 1e8} ${from} for gift voucher, Fee: ${txs.fee / 1e8
+              }`,
             toSendTxs: txs.tx,
           });
         } else {
@@ -625,12 +618,12 @@ class App extends React.Component<any, any> {
   };
 
   private async generateTempWallet(name: string, password: string, spendingPassword: string): Promise<any> {
-    
+
     // const type = 'navcoin-js-v1';
     const network = this.wallet.network;
-    
+
     let newMnemonic = ``;
-    
+
     const wallet = new this.njs.wallet.WalletFile({
       file: name,
       network,
@@ -679,65 +672,45 @@ class App extends React.Component<any, any> {
       const giftObservable$ = new Observable<IGiftTransferWrapper>();
       const giftObserver = {
         next: async (giftInfo: IGiftTransferWrapper) => {
-          console.log(await giftInfo.walletObj.GetBalance());
+
           if (giftInfo != undefined) {
-            if (giftInfo.giftSrc.transactionType == `nav`) {
-              console.log(`attempting to transfer nav:`);
-              try {
-                const txs = await giftInfo.walletObj.NavCreateTransaction(
-                  publicAddress,
-                  (await giftInfo.walletObj.GetBalance()).nav.confirmed,
-                  undefined,
-                  giftInfo.giftSrc.spendingPassword,
-                  true,
-                  10000,
-                  0x1,
-                );
-                if (txs) {
-                  this.setState({
-                    showConfirmTx: true,
-                    showConfirmText: true,
-                    confirmTxText: `You wish to redeem gift code of ${giftInfo.giftSrc.amt} ${giftInfo.giftSrc.transactionType}?`,
-                    toSendTxs: txs.tx,
-                  })
-                } else {
-                  this.setState({
-                    errorLoad: "Could not redeem gift code. Try again in a minute.",
-                  });
-                }
-              } catch (e: any) {
+            try {
+
+              const walletBalance = await giftInfo.walletObj.GetBalance();
+              const txs = (giftInfo.giftSrc.transactionType == `nav`)
+              ? await giftInfo.walletObj.NavCreateTransaction(
+                publicAddress,
+                walletBalance.nav.confirmed,
+                "received-gift",
+                giftInfo.giftSrc.spendingPassword,
+                true,
+                10000,
+                0x1)
+              : await giftInfo.walletObj.xNavCreateTransaction(
+                privateAddress,
+                walletBalance.xnav.confirmed,
+                "received-gift",
+                giftInfo.giftSrc.spendingPassword,
+                true,
+              );
+
+              if (txs) {
+                this.setState({
+                  showConfirmTx: true,
+                  showConfirmText: true,
+                  confirmTxText: `You wish to redeem a gift code of ${giftInfo.giftSrc.amt} ${giftInfo.giftSrc.transactionType}?`,
+                  toSendTxs: txs.tx,
+                })
+              } else {
                 this.setState({
                   errorLoad: "Could not redeem gift code. Try again in a minute.",
                 });
               }
-            } else {
-              console.log(`attempting to transfer xnav:`);
-              try {
-                const txs = await giftInfo.walletObj.xNavCreateTransaction(
-                  privateAddress,
-                  (await giftInfo.walletObj.GetBalance()).xnav.confirmed,
-                  undefined,
-                  giftInfo.giftSrc.spendingPassword,
-                  true,
-                );
-                if (txs) {
-                  this.setState({
-                    showConfirmTx: true,
-                    showConfirmText: true,
-                    confirmTxText: `You wish to redeem gift code of ${giftInfo.giftSrc.amt} ${giftInfo.giftSrc.transactionType}?`,
-                    toSendTxs: txs.tx,
-                  })
-                } else {
-                  this.setState({
-                    errorLoad: "Could not redeem gift code. Try again in a minute.",
-                  });
-                }
-              } catch (e) {
-                this.setState({
-                  errorLoad: "Could not redeem gift code. Try again in a minute.",
-                });
-              }
-            }            
+            } catch (e) {
+              this.setState({
+                errorLoad: "Could not redeem gift code. Try again in a minute.",
+              });
+            }
           }
         },
         error: (e: any) => console.error(e),
@@ -746,7 +719,7 @@ class App extends React.Component<any, any> {
           giftWallet.Disconnect();
           this.njs.wallet.WalletFile.RemoveWallet(walletName);
           // await localforage.removeItem(giftWalletSrc.name);
-          await this.updateWalletList();
+          // await this.updateWalletList();
         },
       };
 
@@ -760,9 +733,8 @@ class App extends React.Component<any, any> {
           walletObj: giftWallet,
           giftSrc: giftWalletSrc,
         };
-
         await giftObserver.next(giftWrapper);
-        giftObserver.complete();
+        await giftObserver.complete();
       });
 
       await giftWallet.Load();
@@ -770,7 +742,7 @@ class App extends React.Component<any, any> {
       console.log(`error redeeming gift card: ${error}`);
     }
   };
-  
+
   public render = () => {
     const {
       walletName,
@@ -845,7 +817,7 @@ class App extends React.Component<any, any> {
             onClose={() => {
               this.setState({
                 showGiftCardDialog: false,
-                giftCardText: "",  
+                giftCardText: "",
               })
             }}
           />
@@ -990,12 +962,12 @@ class App extends React.Component<any, any> {
                     icon={<MoveToInboxOutlined />}
                   />
                   <BottomNavigationAction
-                      label="Settings"
-                      icon={<SettingsOutlined />}
+                    label="Settings"
+                    icon={<SettingsOutlined />}
                   />
                   <BottomNavigationAction
-                      label="Gifts"
-                      icon={<PaymentOutlined />}
+                    label="Gifts"
+                    icon={<PaymentOutlined />}
                   />
                 </BottomNavigation>
               </Paper>
