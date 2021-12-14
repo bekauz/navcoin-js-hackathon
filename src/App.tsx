@@ -537,7 +537,7 @@ class App extends React.Component<any, any> {
               // TODO: display generated gift code to user
               this.setState({
                 showGiftCardDialog: true,
-                giftCardText: `test`
+                giftCardText: encodedWallet,
               });
             }
           });
@@ -586,13 +586,14 @@ class App extends React.Component<any, any> {
       
           const buff = Buffer.from(JSON.stringify(walletToEncode));
           console.log(`encoded wallet: ${buff.toString("base64")}`);
+          const encodedWallet: string = buff.toString("base64");
 
           this.wallet.on("new_tx", async (entry: IWalletHistory) => {
             if (entry.amount === -amount) {
               // TODO: display generated gift code to user
               this.setState({
                 showGiftCardDialog: true,
-                giftCardText: `test`
+                giftCardText: encodedWallet,
               });
             }
           });
