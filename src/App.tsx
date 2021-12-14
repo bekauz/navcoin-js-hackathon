@@ -34,7 +34,8 @@ import Receive from "./components/Receive";
 import Send from "./components/Send";
 import ConfirmTx from "./components/ConfirmTx";
 import Gift from "./components/Gift";
-import { Observable, PartialObserver } from "rxjs";
+import { Observable } from "rxjs";
+import GiftCardDialog from "./components/GiftCardDialog";
 
 themeOptions.spacing(10);
 
@@ -63,6 +64,9 @@ interface IAppState {
   confirmTxText: string;
   showConfirmTx: boolean;
   toSendTxs: string[];
+  showGiftCardDialog: boolean;
+  giftCardText: string;
+
   blockHeight: number;
 }
 
@@ -106,6 +110,9 @@ const INITIAL_STATE: IAppState = {
   errorPassword: "",
   confirmTxText: "",
   showConfirmTx: false,
+  showGiftCardDialog: false,
+  giftCardText: "",
+
   toSendTxs: [],
   blockHeight: -1,
 };
@@ -528,6 +535,10 @@ class App extends React.Component<any, any> {
           this.wallet.on("new_tx", async (entry: IWalletHistory) => {
             if (entry.amount === -amount) {
               // TODO: display generated gift code to user
+              this.setState({
+                showGiftCardDialog: true,
+                giftCardText: `test`
+              });
             }
           });
 
@@ -579,6 +590,10 @@ class App extends React.Component<any, any> {
           this.wallet.on("new_tx", async (entry: IWalletHistory) => {
             if (entry.amount === -amount) {
               // TODO: display generated gift code to user
+              this.setState({
+                showGiftCardDialog: true,
+                giftCardText: `test`
+              });
             }
           });
 
@@ -754,7 +769,7 @@ class App extends React.Component<any, any> {
       console.log(`error redeeming gift card: ${error}`);
     }
   };
-
+  
   public render = () => {
     const {
       walletName,
@@ -777,6 +792,8 @@ class App extends React.Component<any, any> {
       confirmTxText,
       showConfirmTx,
       toSendTxs,
+      showGiftCardDialog,
+      giftCardText,
       blockHeight,
     } = this.state;
 
@@ -819,6 +836,16 @@ class App extends React.Component<any, any> {
                 // TODO: maybe re-enable if workaround for new_tx event event in onGiftPassward is found
                 // bottomNavigation: 0,
               });
+            }}
+          />
+          <GiftCardDialog
+            open={showGiftCardDialog}
+            text={giftCardText}
+            onClose={() => {
+              this.setState({
+                showGiftCardDialog: false,
+                giftCardText: "",  
+              })
             }}
           />
           <AskPassword
