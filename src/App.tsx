@@ -499,121 +499,71 @@ class App extends React.Component<any, any> {
 
     const wallet = await this.generateTempWallet(name, walletPassword, spendingPassword);
 
-    const xNavAddress = (await wallet.xNavReceivingAddresses(false))[0].address;
-    const navAddress = (await wallet.NavReceivingAddresses(false))[0].address;
-
-    if (from == "nav") {
-      try {
-        const txs = await this.wallet.NavCreateTransaction(
-          navAddress,
-          amount,
-          "gift",
-          password,
-          true,
-          100000,
-          type,
-          address,
-        );
-        if (txs) {
-          const walletToEncode = {
-            name,
-            mnemonic: wallet.tempMnemonicStore,
-            password: walletPassword,
-            spendingPassword,
-            network: this.wallet.network,
-            transactionType: `nav`,
-            amt: amount - txs.fee,
-          }
-
-          // encode wallet as gift code
-          const buff = Buffer.from(JSON.stringify(walletToEncode));
-          const encodedWallet: string = buff.toString("base64");
-
-          this.wallet.on("new_tx", async (entry: IWalletHistory) => {
-            if (entry.amount === -amount) {
-              this.setState({
-                showGiftCardDialog: true,
-                giftCardText: encodedWallet,
-              });
-            }
-          });
-
-          this.setState({
-            showConfirmTx: true,
-            confirmTxText: `${amount / 1e8} ${from}  for gift voucher, Fee: ${txs.fee / 1e8
-              }`,
-            toSendTxs: txs.tx,
-          });
-        } else {
-          this.setState({
-            errorLoad: "Could not create transaction.",
-            showConfirmTx: false,
-            confirmTxText: "",
-            toSendTxs: [],
-          });
-        }
-      } catch (e: any) {
-        this.setState({
-          errorLoad: e.toString(),
-          showConfirmTx: false,
-          confirmTxText: "",
-          toSendTxs: [],
-        });
-      }
-    } else if (from == "xnav") {
-      try {
-        const txs = await this.wallet.xNavCreateTransaction(
-          xNavAddress,
+    try {
+      const txs = (from == "nav")
+        ? await this.wallet.NavCreateTransaction(
+            (await wallet.NavReceivingAddresses(false))[0].address,
+            amount,
+            "gift",
+            password,
+            true,
+            100000,
+            type,
+            address,
+          )
+        : await this.wallet.xNavCreateTransaction(
+          (await wallet.xNavReceivingAddresses(false))[0].address,
           amount,
           "gift",
           password
         );
-        if (txs) {
-          const walletToEncode = {
-            name,
-            mnemonic: wallet.tempMnemonicStore,
-            password: walletPassword,
-            spendingPassword,
-            network: this.wallet.network,
-            transactionType: `xnav`,
-            amt: amount - txs.fee,
+
+      if (txs) {
+
+        this.wallet.on("new_tx", async (entry: IWalletHistory) => {
+          if (entry.amount === -amount) {
+            console.log('received gift generating transaction:');
+            console.log(entry);
+            this.setState({
+              showGiftCardDialog: true,
+              giftCardText: encodedWallet,
+            });
           }
-
-          const buff = Buffer.from(JSON.stringify(walletToEncode));
-          console.log(`encoded wallet: ${buff.toString("base64")}`);
-          const encodedWallet: string = buff.toString("base64");
-
-          this.wallet.on("new_tx", async (entry: IWalletHistory) => {
-            if (entry.amount === -amount) {
-              this.setState({
-                showGiftCardDialog: true,
-                giftCardText: encodedWallet,
-              });
-            }
-          });
-
-          this.setState({
-            showConfirmTx: true,
-            confirmTxText: `${amount / 1e8} ${from} for gift voucher, Fee: ${txs.fee / 1e8
-              }`,
-            toSendTxs: txs.tx,
-          });
-        } else {
-          this.setState({
-            errorLoad: "Could not create transaction.",
-            showConfirmTx: false,
-            confirmTxText: "",
-            toSendTxs: [],
-          });
+        });
+        const walletToEncode = {
+          name,
+          mnemonic: wallet.tempMnemonicStore,
+          password: walletPassword,
+          spendingPassword,
+          network: this.wallet.network,
+          transactionType: from,
+          amt: amount - txs.fee,
         }
-      } catch (e: any) {
+
+        // encode wallet as gift code
+        const buff = Buffer.from(JSON.stringify(walletToEncode));
+        const encodedWallet: string = buff.toString("base64");
+
         this.setState({
-          errorLoad: e.toString(),
+          showConfirmTx: true,
+          confirmTxText: `${amount / 1e8} ${from}  for gift voucher, Fee: ${txs.fee / 1e8}`,
+          toSendTxs: txs.tx,
+        });
+      } else {
+        this.setState({
+          errorLoad: "Could not create transaction.",
           showConfirmTx: false,
           confirmTxText: "",
           toSendTxs: [],
         });
       }
+    } catch (e: any) {
+      this.setState({
+        errorLoad: e.toString(),
+        showConfirmTx: false,
+        confirmTxText: "",
+        toSendTxs: [],
+      });
     }
   };
 
@@ -669,6 +619,7 @@ class App extends React.Component<any, any> {
       const giftWalletSrc = JSON.parse(decodedGiftCode.toString('ascii'));
       const giftWallet = this.giftCodeToWalletObj(giftWalletSrc);
 
+
       const giftObservable$ = new Observable<IGiftTransferWrapper>();
       const giftObserver = {
         next: async (giftInfo: IGiftTransferWrapper) => {
@@ -680,7 +631,7 @@ class App extends React.Component<any, any> {
               const txs = (giftInfo.giftSrc.transactionType == `nav`)
               ? await giftInfo.walletObj.NavCreateTransaction(
                 publicAddress,
-                walletBalance.nav.confirmed,
+                walletBalance.xnav.confirmed,
                 "received-gift",
                 giftInfo.giftSrc.spendingPassword,
                 true,
@@ -693,8 +644,10 @@ class App extends React.Component<any, any> {
                 giftInfo.giftSrc.spendingPassword,
                 true,
               );
-
+              console.log(`transaction created with fee ${txs.fee}`);
+              console.log(txs);
               if (txs) {
+                console.log(txs)
                 this.setState({
                   showConfirmTx: true,
                   showConfirmText: true,
@@ -715,9 +668,10 @@ class App extends React.Component<any, any> {
         },
         error: (e: any) => console.error(e),
         complete: async () => {
-          const { walletName } = giftWalletSrc.name;
-          giftWallet.Disconnect();
-          this.njs.wallet.WalletFile.RemoveWallet(walletName);
+          // noop for now, debugging
+          // const { walletName } = giftWalletSrc.name;
+          // giftWallet.Disconnect();
+          // this.njs.wallet.WalletFile.RemoveWallet(walletName);
           // await localforage.removeItem(giftWalletSrc.name);
           // await this.updateWalletList();
         },
@@ -727,6 +681,8 @@ class App extends React.Component<any, any> {
 
 
       giftWallet.on("loaded", async () => {
+      
+        console.log('calledRedeem')
         await giftWallet.Connect();
         console.log((await giftWallet.GetBalance()));
         const giftWrapper: IGiftTransferWrapper = {
@@ -734,7 +690,7 @@ class App extends React.Component<any, any> {
           giftSrc: giftWalletSrc,
         };
         await giftObserver.next(giftWrapper);
-        await giftObserver.complete();
+          // await giftObserver.complete();
       });
 
       await giftWallet.Load();
