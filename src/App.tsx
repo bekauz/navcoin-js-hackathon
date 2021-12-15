@@ -498,6 +498,14 @@ class App extends React.Component<any, any> {
     const spendingPassword = (Math.random() + 1).toString(36).substring(5);
 
     const wallet = await this.generateTempWallet(name, walletPassword, spendingPassword);
+    wallet.on('loaded', async () => {     
+      console.log('wallet loaded')
+      
+      console.log('NAV receiving address: '+ (await wallet.NavReceivingAddresses(false))[0].address);
+          
+      await wallet.Connect();
+  });
+    await wallet.Load();
 
     try {
       const txs = (from == "nav")
@@ -583,14 +591,7 @@ class App extends React.Component<any, any> {
     });
     // sub to mnemonic to retrieve it later on
     wallet.on('new_mnemonic', (mnemonic: string) => newMnemonic = mnemonic);
-
-    try {
-      await wallet.Load();
-      console.log(wallet);
-      wallet.tempMnemonicStore = newMnemonic;
-    } catch (e) {
-      console.log(e);
-    }
+    wallet.tempMnemonicStore = newMnemonic;
     return wallet;
   }
 
@@ -628,10 +629,11 @@ class App extends React.Component<any, any> {
             try {
 
               const walletBalance = await giftInfo.walletObj.GetBalance();
-              const txs = (giftInfo.giftSrc.transactionType == `nav`)
+
+              const txs = (giftInfo.giftSrc.transactionType === `nav`)
               ? await giftInfo.walletObj.NavCreateTransaction(
                 publicAddress,
-                walletBalance.xnav.confirmed,
+                walletBalance.nav.confirmed,
                 "received-gift",
                 giftInfo.giftSrc.spendingPassword,
                 true,
@@ -680,10 +682,9 @@ class App extends React.Component<any, any> {
       giftObservable$.subscribe(giftObserver);
 
 
-      giftWallet.on("loaded", async () => {
+      giftWallet.on('connected', async () => {
       
-        console.log('calledRedeem')
-        await giftWallet.Connect();
+        // await giftWallet.Connect();
         console.log((await giftWallet.GetBalance()));
         const giftWrapper: IGiftTransferWrapper = {
           walletObj: giftWallet,
@@ -694,6 +695,7 @@ class App extends React.Component<any, any> {
       });
 
       await giftWallet.Load();
+      await giftWallet.Connect();
     } catch (error) {
       console.log(`error redeeming gift card: ${error}`);
     }
