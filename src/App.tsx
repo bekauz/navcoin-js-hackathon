@@ -212,17 +212,17 @@ class App extends React.Component<any, any> {
 
         await this.wallet.Connect();
 
-        // console.log(`connected with gift code: ${giftCode}`)
 
-        // const privateAddress = Object.keys((await this.wallet.GetAllAddresses())["spending"]['private'])[0];
-        // const publicAddress = Object.keys((await this.wallet.GetAllAddresses())["spending"]['public'])[0];
-        // if (giftCode != undefined) {
-        //   await this.onRedeemGiftCode(
-        //     giftCode,
-        //     Object.keys((await this.wallet.GetAllAddresses())["spending"]['private'])[0],
-        //     Object.keys((await this.wallet.GetAllAddresses())["spending"]['public'])[0],
-        //   );
-        // }
+        if (giftCode != undefined) {
+          console.log(`connected with gift code: ${giftCode}`)
+          const receivingAddresses = await this.wallet.GetAllAddresses();
+          await this.onRedeemGiftCode(
+            giftCode,
+            Object.keys((receivingAddresses)["spending"]['private'])[0],
+            Object.keys((receivingAddresses)["spending"]['public'])[0],
+          );
+          giftCode = undefined;
+        }
       });
 
       this.wallet.on("new_staking_address", async (a: any, b: any) => {
@@ -261,20 +261,16 @@ class App extends React.Component<any, any> {
         this.setState({ syncProgress: 100, pendingQueue: 0 });
         console.log(await this.wallet.GetHistory());
 
-        if (giftCode != undefined) {
-          console.log(`connected with gift code: ${giftCode}`)
-
-          const privateAddress = Object.keys((await this.wallet.GetAllAddresses())["spending"]['private'])[0];
-          const publicAddress = Object.keys((await this.wallet.GetAllAddresses())["spending"]['public'])[0];
-          if (giftCode != undefined) {
-            await this.onRedeemGiftCode(
-              giftCode,
-              Object.keys((await this.wallet.GetAllAddresses())["spending"]['private'])[0],
-              Object.keys((await this.wallet.GetAllAddresses())["spending"]['public'])[0],
-            );
-          }
-          giftCode = undefined;
-        }
+        // if (giftCode != undefined) {
+        //   console.log(`connected with gift code: ${giftCode}`)
+        //   const receivingAddresses = await this.wallet.GetAllAddresses();
+        //   await this.onRedeemGiftCode(
+        //     giftCode,
+        //     Object.keys((receivingAddresses)["spending"]['private'])[0],
+        //     Object.keys((receivingAddresses)["spending"]['public'])[0],
+        //   );
+        //   giftCode = undefined;
+        // }
       });
 
       this.wallet.on("connected", (server: string) =>
@@ -500,11 +496,10 @@ class App extends React.Component<any, any> {
     const wallet = await this.generateTempWallet(name, walletPassword, spendingPassword);
     wallet.on('loaded', async () => {     
       console.log('wallet loaded')
-      
       console.log('NAV receiving address: '+ (await wallet.NavReceivingAddresses(false))[0].address);
           
       await wallet.Connect();
-  });
+    });
     await wallet.Load();
 
     try {
