@@ -44,6 +44,7 @@ interface IAppState {
   walletList: string[];
   loadingWallet: boolean;
   connectingWallet: boolean;
+  redeemingGiftCode: boolean;
   errorLoad: string;
   bottomNavigation: any;
   balances: {
@@ -91,6 +92,7 @@ const INITIAL_STATE: IAppState = {
   walletList: [],
   loadingWallet: false,
   connectingWallet: false,
+  redeemingGiftCode: false,
   errorLoad: "",
   bottomNavigation: 0,
   balances: {
@@ -614,18 +616,18 @@ class App extends React.Component<any, any> {
       });
 
       this.setState({
-        loadingWallet: true,
+        redeemingGiftCode: true,
         errorLoad: undefined,
       });
 
       const giftObservable$ = new Observable<IGiftTransferWrapper>();
       const giftObserver = {
         next: async (giftInfo: IGiftTransferWrapper) => {
-          if (this.state.loadingWallet) {
+          if (this.state.redeemingGiftCode) {
 
             console.log(`gift card loading in state`);
             this.setState({
-              loadingWallet: false,
+              redeemingGiftCode: false,
               errorLoad: undefined,
             })
           }
@@ -714,6 +716,7 @@ class App extends React.Component<any, any> {
       errorLoad,
       bottomNavigation,
       connectingWallet,
+      redeemingGiftCode,
       balances,
       history,
       syncProgress,
@@ -838,6 +841,8 @@ class App extends React.Component<any, any> {
             <Loading>Loading wallet...</Loading>
           ) : connectingWallet ? (
             <Loading>Connecting to the network...</Loading>
+          ) : redeemingGiftCode ? (
+            <Loading>Redeeming gift code...</Loading>
           ) : (
             <>
               {bottomNavigation == 0 ? (
