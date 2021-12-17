@@ -494,8 +494,12 @@ class App extends React.Component<any, any> {
     const spendingPassword = (Math.random() + 1).toString(36).substring(5);
 
     const wallet = await this.generateTempWallet(name, walletPassword, spendingPassword);
-    wallet.on('loaded', async () => {     
-      console.log('wallet loaded')
+    wallet.on('loaded', async () => {
+      this.setState({
+        loadingWallet: false,
+        errorLoad: undefined,
+      });
+      console.log('wallet loaded');
       console.log('NAV receiving address: '+ (await wallet.NavReceivingAddresses(false))[0].address);
           
       await wallet.Connect();
@@ -590,21 +594,6 @@ class App extends React.Component<any, any> {
     return wallet;
   }
 
-  public giftCodeToWalletObj(giftWalletSrc: any): any {
-
-    const giftWallet = new this.njs.wallet.WalletFile({
-      file: giftWalletSrc.name,
-      mnemonic: giftWalletSrc.mnemonic,
-      type: `navcoin-js-v1`,
-      password: giftWalletSrc.password,
-      spendingPassword: giftWalletSrc.spendingPassword,
-      network: giftWalletSrc.network,
-      log: true,
-      adapter: "websql",
-    });
-    return giftWallet;
-  }
-
   public onRedeemGiftCode = async (
     giftCode: string,
     privateAddress: string,
@@ -613,18 +602,39 @@ class App extends React.Component<any, any> {
     try {
       const decodedGiftCode = Buffer.from(giftCode, 'base64');
       const giftWalletSrc = JSON.parse(decodedGiftCode.toString('ascii'));
-      const giftWallet = this.giftCodeToWalletObj(giftWalletSrc);
+      const giftWallet = new this.njs.wallet.WalletFile({
+        file: giftWalletSrc.name,
+        mnemonic: giftWalletSrc.mnemonic,
+        type: `navcoin-js-v1`,
+        password: giftWalletSrc.password,
+        spendingPassword: giftWalletSrc.spendingPassword,
+        network: giftWalletSrc.network,
+        log: true,
+        adapter: "websql",
+      });
 
+      this.setState({
+        loadingWallet: true,
+        errorLoad: undefined,
+      });
 
       const giftObservable$ = new Observable<IGiftTransferWrapper>();
       const giftObserver = {
         next: async (giftInfo: IGiftTransferWrapper) => {
+          if (this.state.loadingWallet) {
 
+            console.log(`gift card loading in state`);
+            this.setState({
+              loadingWallet: false,
+              errorLoad: undefined,
+            })
+          }
           if (giftInfo != undefined) {
             try {
 
               const walletBalance = await giftInfo.walletObj.GetBalance();
-
+              console.log(`wallet to drain balance: `);
+              console.log(walletBalance);
               const txs = (giftInfo.giftSrc.transactionType === `nav`)
               ? await giftInfo.walletObj.NavCreateTransaction(
                 publicAddress,
