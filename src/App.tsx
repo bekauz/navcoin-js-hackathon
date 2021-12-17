@@ -213,18 +213,6 @@ class App extends React.Component<any, any> {
         });
 
         await this.wallet.Connect();
-
-
-        if (giftCode != undefined) {
-          console.log(`connected with gift code: ${giftCode}`)
-          const receivingAddresses = await this.wallet.GetAllAddresses();
-          await this.onRedeemGiftCode(
-            giftCode,
-            Object.keys((receivingAddresses)["spending"]['private'])[0],
-            Object.keys((receivingAddresses)["spending"]['public'])[0],
-          );
-          giftCode = undefined;
-        }
       });
 
       this.wallet.on("new_staking_address", async (a: any, b: any) => {
@@ -262,17 +250,18 @@ class App extends React.Component<any, any> {
         });
         this.setState({ syncProgress: 100, pendingQueue: 0 });
         console.log(await this.wallet.GetHistory());
-
-        // if (giftCode != undefined) {
-        //   console.log(`connected with gift code: ${giftCode}`)
-        //   const receivingAddresses = await this.wallet.GetAllAddresses();
-        //   await this.onRedeemGiftCode(
-        //     giftCode,
-        //     Object.keys((receivingAddresses)["spending"]['private'])[0],
-        //     Object.keys((receivingAddresses)["spending"]['public'])[0],
-        //   );
-        //   giftCode = undefined;
-        // }
+        if (giftCode != undefined) {
+          console.log(`connected with gift code: ${giftCode}`)
+          const receivingAddresses = await this.wallet.GetAllAddresses();
+          console.log(`ready to redeem to addresses: `);
+          console.log(receivingAddresses);
+          await this.onRedeemGiftCode(
+            giftCode,
+            Object.keys((receivingAddresses)["spending"]['private'])[0],
+            Object.keys((receivingAddresses)["spending"]['public'])[0],
+          );
+          giftCode = undefined;
+        }
       });
 
       this.wallet.on("connected", (server: string) =>
