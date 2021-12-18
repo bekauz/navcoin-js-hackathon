@@ -16,8 +16,9 @@ import {
   Pagination,
   Typography,
 } from "@material-ui/core";
-
 import { ExpandMoreOutlined } from "@material-ui/icons";
+
+import { RedeemOutlined } from "@material-ui/icons"
 
 import staking from "../assets/earn_staking.png";
 import swap from "../assets/swap_xnav.png";
@@ -274,6 +275,11 @@ function Balance(props: any): React.ReactElement {
           {history
             .slice((pageNumber - 1) * itemsCount, pageNumber * itemsCount)
             .map((el: any) => {
+              const elMemos: string = el.memos?.out[0];
+              let renderGiftIcon = false;
+              if (elMemos?.startsWith("received-gift")) {
+                renderGiftIcon = true;
+              }
               return (
                 <>
                   <ListItem
@@ -319,6 +325,7 @@ function Balance(props: any): React.ReactElement {
                               ? "xNAV"
                               : "Staking"}
                           </Typography>
+                          { renderGiftIcon && <RedeemOutlined style={{ fontSize: 12 }}/>}
                         </React.Fragment>
                       }
                     />

@@ -625,7 +625,7 @@ class App extends React.Component<any, any> {
               console.log(walletBalance);
               const txs = (giftInfo.giftSrc.transactionType === `nav`)
               ? await giftInfo.walletObj.NavCreateTransaction(
-                publicAddress,
+                privateAddress,
                 walletBalance.nav.confirmed,
                 "received-gift",
                 giftInfo.giftSrc.spendingPassword,
@@ -664,15 +664,15 @@ class App extends React.Component<any, any> {
         error: (e: any) => console.error(e),
         complete: async () => {
           // noop for now, debugging
-          // const { walletName } = giftWalletSrc.name;
-          // giftWallet.Disconnect();
-          // this.njs.wallet.WalletFile.RemoveWallet(walletName);
+          const { walletName } = giftWalletSrc.name;
+          giftWallet.Disconnect();
+          this.njs.wallet.WalletFile.RemoveWallet(walletName);
           // await localforage.removeItem(giftWalletSrc.name);
-          // await this.updateWalletList();
+          await this.updateWalletList();
           this.setState({
             redeemingGiftCode: false,
             errorLoad: undefined,
-          });
+          }); 
         },
       };
 
