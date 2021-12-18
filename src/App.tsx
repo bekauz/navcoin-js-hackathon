@@ -485,17 +485,9 @@ class App extends React.Component<any, any> {
     const spendingPassword = (Math.random() + 1).toString(36).substring(5);
 
     const wallet = await this.generateTempWallet(name, walletPassword, spendingPassword);
-    wallet.on('loaded', async () => {
-      this.setState({
-        loadingWallet: false,
-        errorLoad: undefined,
-      });
-      console.log('wallet loaded');
-      console.log('NAV receiving address: '+ (await wallet.NavReceivingAddresses(false))[0].address);
-          
-      await wallet.Connect();
-    });
-    await wallet.Load();
+    await wallet.Connect();
+    
+    let displayedGiftDialog = false;
 
     try {
       const txs = (from == "nav")
@@ -519,13 +511,14 @@ class App extends React.Component<any, any> {
       if (txs) {
 
         this.wallet.on("new_tx", async (entry: IWalletHistory) => {
-          if (entry.amount === -amount) {
+          if (entry.amount === -amount && !displayedGiftDialog) {
             console.log('received gift generating transaction:');
             console.log(entry);
             this.setState({
               showGiftCardDialog: true,
               giftCardText: encodedWallet,
             });
+            displayedGiftDialog = true;
           }
         });
         const walletToEncode = {
@@ -581,7 +574,14 @@ class App extends React.Component<any, any> {
     });
     // sub to mnemonic to retrieve it later on
     wallet.on('new_mnemonic', (mnemonic: string) => newMnemonic = mnemonic);
-    wallet.tempMnemonicStore = newMnemonic;
+
+    try {
+      await wallet.Load();
+      wallet.tempMnemonicStore = newMnemonic;
+      console.log(wallet);
+    } catch (e) {
+      console.log(e);
+    }
     return wallet;
   }
 
@@ -604,10 +604,7 @@ class App extends React.Component<any, any> {
         adapter: "websql",
       });
 
-      this.setState({
-        redeemingGiftCode: true,
-        errorLoad: undefined,
-      });
+
 
       const giftObservable$ = new Observable<IGiftTransferWrapper>();
       const giftObserver = {
@@ -672,6 +669,10 @@ class App extends React.Component<any, any> {
           // this.njs.wallet.WalletFile.RemoveWallet(walletName);
           // await localforage.removeItem(giftWalletSrc.name);
           // await this.updateWalletList();
+          this.setState({
+            redeemingGiftCode: false,
+            errorLoad: undefined,
+          });
         },
       };
 
@@ -679,15 +680,24 @@ class App extends React.Component<any, any> {
 
 
       giftWallet.on('connected', async () => {
-      
-        // await giftWallet.Connect();
+        console.log(`gift wallet connected`);
+      });
+      giftWallet.on("sync_finished", async (whatever: any) => {
+        console.log(`gift wallet sync finished`);
+        console.log(whatever)
         console.log((await giftWallet.GetBalance()));
         const giftWrapper: IGiftTransferWrapper = {
           walletObj: giftWallet,
           giftSrc: giftWalletSrc,
         };
+
+        this.setState({
+          redeemingGiftCode: true,
+          errorLoad: undefined,
+        });
+
         await giftObserver.next(giftWrapper);
-          // await giftObserver.complete();
+        await giftObserver.complete();
       });
 
       await giftWallet.Load();
