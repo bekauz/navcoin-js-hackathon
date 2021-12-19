@@ -613,8 +613,7 @@ class App extends React.Component<any, any> {
               redeemingGiftCode: false,
               errorLoad: undefined,
             })
-          }
-          if (giftInfo != undefined) {
+
             try {
 
               const walletBalance = await giftInfo.walletObj.GetBalance();
@@ -672,21 +671,27 @@ class App extends React.Component<any, any> {
       giftObservable$.subscribe(giftObserver);
 
       giftWallet.on("sync_finished", async () => {
-        console.log(`gift wallet sync finished`);
-        console.log((await giftWallet.GetBalance()));
-        const giftWrapper: IGiftTransferWrapper = {
-          walletObj: giftWallet,
-          giftSrc: giftWalletSrc,
-        };
-
-        await giftObserver.next(giftWrapper);
-        await giftObserver.complete();
+        if (this.state.redeemingGiftCode) {
+          console.log(`gift wallet sync finished`);
+          console.log((await giftWallet.GetBalance()));
+          const giftWrapper: IGiftTransferWrapper = {
+            walletObj: giftWallet,
+            giftSrc: giftWalletSrc,
+          };
+          await giftObserver.next(giftWrapper);
+          await giftObserver.complete();
+        }
       });
 
+      this.setState({
+        redeemingGiftCode: true,
+        errorLoad: undefined,
+      });
       await giftWallet.Load();
       await giftWallet.Connect();
     } catch (error) {
-      console.log(`error redeeming gift card: ${error}`);
+      console.error(`error redeeming gift card`);
+      console.error(`${error}`);
     }
   };
 
