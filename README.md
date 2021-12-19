@@ -18,7 +18,7 @@ Consider Alice generating a gift code for Bob. Some possible use cases:
 
 ### generating gift code
 
-![Generating gift code](demo/generatingGiftCodeNAV.gif)
+![Generating gift code](demo/generateGiftCodeNAV.gif)
 
 ### redeeming a gift code
 
