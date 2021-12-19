@@ -1,0 +1,20 @@
+{
+  "files": {
+    "main.js": "/navcoin-js-hackathon/static/js/main.e709dc50.chunk.js",
+    "main.js.map": "/navcoin-js-hackathon/static/js/main.e709dc50.chunk.js.map",
+    "runtime-main.js": "/navcoin-js-hackathon/static/js/runtime-main.1ff300c7.js",
+    "runtime-main.js.map": "/navcoin-js-hackathon/static/js/runtime-main.1ff300c7.js.map",
+    "static/js/2.e1f1f062.chunk.js": "/navcoin-js-hackathon/static/js/2.e1f1f062.chunk.js",
+    "static/js/2.e1f1f062.chunk.js.map": "/navcoin-js-hackathon/static/js/2.e1f1f062.chunk.js.map",
+    "index.html": "/navcoin-js-hackathon/index.html",
+    "static/js/2.e1f1f062.chunk.js.LICENSE.txt": "/navcoin-js-hackathon/static/js/2.e1f1f062.chunk.js.LICENSE.txt",
+    "static/media/NAV.b964b9b0.png": "/navcoin-js-hackathon/static/media/NAV.b964b9b0.png",
+    "static/media/XNAV.73904c2d.png": "/navcoin-js-hackathon/static/media/XNAV.73904c2d.png",
+    "static/media/logo.162d44eb.svg": "/navcoin-js-hackathon/static/media/logo.162d44eb.svg"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.1ff300c7.js",
+    "static/js/2.e1f1f062.chunk.js",
+    "static/js/main.e709dc50.chunk.js"
+  ]
+}
