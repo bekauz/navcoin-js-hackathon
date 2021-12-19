@@ -679,11 +679,6 @@ class App extends React.Component<any, any> {
           giftSrc: giftWalletSrc,
         };
 
-        this.setState({
-          redeemingGiftCode: true,
-          errorLoad: undefined,
-        });
-
         await giftObserver.next(giftWrapper);
         await giftObserver.complete();
       });

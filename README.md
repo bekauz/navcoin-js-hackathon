@@ -18,17 +18,25 @@ Consider Alice generating a gift code for Bob. Some possible use cases:
 
 ### generating gift code
 
+Gift codes can be generated under Gifts tab. After a successful transaction a dialog with show up with both a QR code and a text form which can be copied to clipboard.
+
 ![Generating gift code](demo/generateGiftCodeNAV.gif)
 
 ### redeeming a gift code
 
-Gift codes can be redeemed on the Gifts tab by pasting the gift code.
+Gift codes can be redeemed on the Gifts tab. After a gift code has been redeemed successfully, the transaction will appear along with other transactions and have a small gift icon indicating it comes from a gift code.
+
+![Redeem to existing wallet](demo/redeemRegular.gif)
 
 ### redeeming a gift code without a wallet
 
 Aimed at users without a wallet, there is an option to redeem a gift code along with new wallet creation.
 
 ![Redeem without a wallet](demo/redeemOnCreate.gif)
+
+## notes
+
+As this was one of my first experiences interacting with blockchain and my first time using React, the project is not as polished as I would like it to be! Nevertheless I'm happy with the way it turned out and how much I learned in the process.
 
 ## instructions to run locally
 
