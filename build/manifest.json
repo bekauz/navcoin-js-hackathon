@@ -1,6 +1,6 @@
 {
-  "short_name": "Navcoin Wallet",
-  "name": "Navcoin Light Wallet",
+  "short_name": "Navcoin Scaffold",
+  "name": "Navcoin Scaffold",
   "icons": [
     {
       "src": "logo.svg",
