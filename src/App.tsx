@@ -486,7 +486,6 @@ class App extends React.Component<any, any> {
 
     const wallet = await this.generateTempWallet(name, walletPassword, spendingPassword);
     await wallet.Connect();
-    
 
     try {
       const txs = (from == "nav")
@@ -525,12 +524,13 @@ class App extends React.Component<any, any> {
         
         this.wallet.on("new_tx", async (entry: IWalletHistory) => {
           if (entry.amount === -amount && !this.state.showGiftCardDialog) {
-            console.log('received gift generating transaction:');
-            console.log(entry);
-            this.setState({
-              showGiftCardDialog: true,
-              giftCardText: encodedWallet,
-            });
+            console.log('received gift generating transaction');
+            if (entry.confirmed) {
+              this.setState({
+                showGiftCardDialog: true,
+                giftCardText: encodedWallet,
+              });
+            }
           }
         });
         
@@ -606,13 +606,15 @@ class App extends React.Component<any, any> {
       const giftObservable$ = new Observable<IGiftTransferWrapper>();
       const giftObserver = {
         next: async (giftInfo: IGiftTransferWrapper) => {
-          if (this.state.redeemingGiftCode && giftInfo != undefined) {
+          if (this.state.redeemingGiftCode) {
 
-            console.log(`attempting to redeem gift card:`);
+            console.log(`gift card loading in state`);
             this.setState({
               redeemingGiftCode: false,
               errorLoad: undefined,
             })
+          }
+          if (giftInfo != undefined) {
             try {
 
               const walletBalance = await giftInfo.walletObj.GetBalance();
