@@ -487,7 +487,6 @@ class App extends React.Component<any, any> {
     const wallet = await this.generateTempWallet(name, walletPassword, spendingPassword);
     await wallet.Connect();
     
-    let displayedGiftDialog = false;
 
     try {
       const txs = (from == "nav")
@@ -509,18 +508,7 @@ class App extends React.Component<any, any> {
         );
 
       if (txs) {
-
-        this.wallet.on("new_tx", async (entry: IWalletHistory) => {
-          if (entry.amount === -amount && !displayedGiftDialog) {
-            console.log('received gift generating transaction:');
-            console.log(entry);
-            this.setState({
-              showGiftCardDialog: true,
-              giftCardText: encodedWallet,
-            });
-            displayedGiftDialog = true;
-          }
-        });
+        
         const walletToEncode = {
           name,
           mnemonic: wallet.tempMnemonicStore,
@@ -534,7 +522,18 @@ class App extends React.Component<any, any> {
         // encode wallet as gift code
         const buff = Buffer.from(JSON.stringify(walletToEncode));
         const encodedWallet: string = buff.toString("base64");
-
+        
+        this.wallet.on("new_tx", async (entry: IWalletHistory) => {
+          if (entry.amount === -amount && !this.state.showGiftCardDialog) {
+            console.log('received gift generating transaction:');
+            console.log(entry);
+            this.setState({
+              showGiftCardDialog: true,
+              giftCardText: encodedWallet,
+            });
+          }
+        });
+        
         this.setState({
           showConfirmTx: true,
           confirmTxText: `${amount / 1e8} ${from}  for gift voucher, Fee: ${txs.fee / 1e8}`,
@@ -604,25 +603,19 @@ class App extends React.Component<any, any> {
         adapter: "websql",
       });
 
-
-
       const giftObservable$ = new Observable<IGiftTransferWrapper>();
       const giftObserver = {
         next: async (giftInfo: IGiftTransferWrapper) => {
-          if (this.state.redeemingGiftCode) {
+          if (this.state.redeemingGiftCode && giftInfo != undefined) {
 
-            console.log(`gift card loading in state`);
+            console.log(`attempting to redeem gift card:`);
             this.setState({
               redeemingGiftCode: false,
               errorLoad: undefined,
             })
-          }
-          if (giftInfo != undefined) {
             try {
 
               const walletBalance = await giftInfo.walletObj.GetBalance();
-              console.log(`wallet to drain balance: `);
-              console.log(walletBalance);
               const txs = (giftInfo.giftSrc.transactionType === `nav`)
               ? await giftInfo.walletObj.NavCreateTransaction(
                 privateAddress,
@@ -639,8 +632,6 @@ class App extends React.Component<any, any> {
                 giftInfo.giftSrc.spendingPassword,
                 true,
               );
-              console.log(`transaction created with fee ${txs.fee}`);
-              console.log(txs);
               if (txs) {
                 console.log(txs)
                 this.setState({
@@ -663,28 +654,23 @@ class App extends React.Component<any, any> {
         },
         error: (e: any) => console.error(e),
         complete: async () => {
-          // noop for now, debugging
+          this.setState({
+            redeemingGiftCode: false,
+            errorLoad: undefined,
+          });
+
           const { walletName } = giftWalletSrc.name;
           giftWallet.Disconnect();
           this.njs.wallet.WalletFile.RemoveWallet(walletName);
           // await localforage.removeItem(giftWalletSrc.name);
           await this.updateWalletList();
-          this.setState({
-            redeemingGiftCode: false,
-            errorLoad: undefined,
-          }); 
         },
       };
 
       giftObservable$.subscribe(giftObserver);
 
-
-      giftWallet.on('connected', async () => {
-        console.log(`gift wallet connected`);
-      });
-      giftWallet.on("sync_finished", async (whatever: any) => {
+      giftWallet.on("sync_finished", async () => {
         console.log(`gift wallet sync finished`);
-        console.log(whatever)
         console.log((await giftWallet.GetBalance()));
         const giftWrapper: IGiftTransferWrapper = {
           walletObj: giftWallet,
