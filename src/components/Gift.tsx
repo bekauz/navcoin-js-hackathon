@@ -89,7 +89,7 @@ export default function Gift(props: any): React.ReactElement {
           }}
           variant={"h4"}
         >
-          Generate new gift
+          Generate a gift code
         </Typography>
       )}
       <Box
