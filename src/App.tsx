@@ -759,8 +759,7 @@ class App extends React.Component<any, any> {
                 confirmTxText: "",
                 showConfirmTx: false,
                 toSendTxs: [],
-                // TODO: maybe re-enable if workaround for new_tx event event in onGiftPassward is found
-                // bottomNavigation: 0,
+                bottomNavigation: 0,
               });
             }}
           />
