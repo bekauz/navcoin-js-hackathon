@@ -1,8 +1,8 @@
 # navcoin-js hackathon
 
-This is my project for the navcoin-js hackathon. 
+This is my resulting project for the navcoin-js hackathon. 
 
-General hackathon guidelines were to build a privacy-focused app that makes creative use of the xNAV currency.
+General hackathon guidelines were to build a privacy-focused app that makes creative use of the xNAV currency and the `navcoin-js` library.
 
 ## idea
 
@@ -40,4 +40,6 @@ As this was one of my first experiences interacting with blockchain and my first
 
 ## instructions to run locally
 
-Clone the repo, install the npm packages using `npm install` and start the application using `yarn start`.
+1. Clone the repository
+2. Install the npm packages using `npm install`
+3. Start the application using `yarn start`
