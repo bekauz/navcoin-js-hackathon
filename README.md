@@ -1,6 +1,6 @@
 # navcoin-js hackathon
 
-This is my resulting project for the navcoin-js hackathon. 
+This is my resulting project for the navcoin-js hackathon. It was awarded 2nd place.
 
 General hackathon guidelines were to build a privacy-focused app that makes creative use of the xNAV currency and the `navcoin-js` library.
 
